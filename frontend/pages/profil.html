@@ -317,17 +317,44 @@
 
     document.getElementById('babyfootForm').onsubmit = async (e) => {
       e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const originalBtnText = btn.textContent;
+
       const formData = new FormData(e.target);
       const payload = Object.fromEntries(formData.entries());
       payload.id_utilisateur = uid;
 
       try {
+        btn.disabled = true;
+        btn.textContent = "Géolocalisation...";
+
+        // Géocodage via l'API Adresse
+        const query = `${payload.adresse}, ${payload.ville}`;
+        const geoRes = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=1`);
+        const geoData = await geoRes.json();
+
+        if (geoData.features && geoData.features.length > 0) {
+          const [lng, lat] = geoData.features[0].geometry.coordinates;
+          payload.xcoord = lng;
+          payload.ycoord = lat;
+        } else {
+          if (!confirm("Adresse non localisée précisément. Voulez-vous quand même enregistrer (il n'apparaîtra pas sur la carte) ?")) {
+            btn.disabled = false;
+            btn.textContent = originalBtnText;
+            return;
+          }
+        }
+
+        btn.textContent = "Enregistrement...";
         await babyfootService.createBabyfoot(payload);
         alert("Babyfoot ajouté avec succès !");
         document.getElementById('babyfootModal').classList.remove('show');
         loadMyBabyfoots();
       } catch (err) {
         alert("Erreur lors de l'ajout : " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalBtnText;
       }
     };
 
