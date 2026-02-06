@@ -68,7 +68,7 @@
 
     const stationIcon = L.icon({
       iconUrl: 'assets/icones/raiway_station_4329-1655540952.png',
-      iconSize: [24, 24], iconAnchor: [12, 24], popupAnchor: [0, -24]
+      iconSize: [12, 12], iconAnchor: [6, 12], popupAnchor: [0, -12]
     });
 
     let stationsGeoJSON = null;
@@ -156,7 +156,7 @@
         } else { labelEl.textContent = "Tous les arrondissements"; }
 
         listEl.innerHTML = filtered.length ? filtered.map(l => `
-          <div class="lieu-card" onclick="window.markers['${l.id_babyfoot}'].openPopup(); map.setView(window.markers['${l.id_babyfoot}'].getLatLng(), 16)">
+          <div class="lieu-card" onclick="window.markers['${l.id_lieu}'].openPopup(); map.setView(window.markers['${l.id_lieu}'].getLatLng(), 18)">
             <div style="font-weight:800; color:var(--rouge)">${l.nom_lieu}</div>
             <div style="font-size:0.8rem; color:#666">${l.adresse || ''}</div>
           </div>`).join('') : '<div class="empty-msg">Aucun lieu trouvé.</div>';
@@ -191,7 +191,7 @@
             } catch (e) { }
           }
           const m = L.marker([lat, lng], { icon: babyfootIcon }).addTo(markerGroup);
-          window.markers[l.id_babyfoot] = m;
+          window.markers[l.id_lieu] = m;
           m.bindPopup(`<h3 style="color:var(--rouge);margin:0">${l.nom_lieu}</h3><p style="font-size:0.9rem;margin:5px 0">${l.adresse || ''}</p>${sInfo}`);
         });
       } catch (e) { console.error(e); }
