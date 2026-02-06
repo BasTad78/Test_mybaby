@@ -197,11 +197,61 @@
       } catch (e) { console.error(e); }
     }
 
-    document.getElementById('btnAdd').onclick = () => {
-      alert("Cliquez sur la carte...");
-      map.once('click', e => {
-        const n = prompt("Nom :");
-        if (n) alert(`Simulé: ${n}`);
+    document.getElementById('btnAdd').onclick = async () => {
+      const user = JSON.parse(localStorage.getItem('mybaby_user') || '{}');
+      if (!user.id_utilisateur && !user.id) {
+        alert("Veuillez vous connecter pour ajouter un lieu.");
+        window.location.hash = '#login';
+        return;
+      }
+
+      alert("Cliquez sur l'emplacement précis du babyfoot sur la carte...");
+      map.once('click', async e => {
+        const { lat, lng } = e.latlng;
+
+        // Tentative de reverse geocoding inverse pour aider l'utilisateur
+        let autoAddr = "";
+        try {
+          const revRes = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${lng}&lat=${lat}`);
+          const revData = await revRes.json();
+          if (revData.features && revData.features.length > 0) {
+            autoAddr = revData.features[0].properties.label;
+          }
+        } catch (err) { }
+
+        const nom = prompt("Nom du lieu (ex: Bar du Commerce) :");
+        if (!nom) return;
+
+        const adresse = prompt("Adresse précise :", autoAddr);
+        if (!adresse) return;
+
+        try {
+          const models = await babyfootService.getModels();
+          if (!models.length) throw new Error("Impossible de charger les modèles");
+
+          const modelMsg = models.map((m, i) => `${i + 1}. ${m.marque} ${m.nom_modele}`).join('\n');
+          const choice = prompt(`Choisissez un modèle (numéro) :\n${modelMsg}`, "1");
+          const selectedModel = models[parseInt(choice) - 1] || models[0];
+
+          const payload = {
+            nom_lieu: nom,
+            adresse: adresse,
+            ville: "Paris", // Par défaut pour ce projet
+            id_modele: selectedModel.id_modele,
+            id_utilisateur: user.id_utilisateur || user.id,
+            xcoord: lng,
+            ycoord: lat
+          };
+
+          await babyfootService.createBabyfoot(payload);
+          alert("Lieu ajouté avec succès !");
+
+          // Rechargement immédiat
+          allLieux = [];
+          loadLieux();
+        } catch (err) {
+          alert("Erreur lors de l'ajout : " + err.message);
+        }
       });
     };
 
