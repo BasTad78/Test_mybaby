@@ -86,9 +86,9 @@ class UserService {
      * @param {string} password 
      * @returns {Object} L'utilisateur connecté
      */
-    async login(email, password) {
-        // 1. Trouver l'utilisateur
-        const user = await userModel.findByEmail(email);
+    async login(identifier, password) {
+        // 1. Trouver l'utilisateur (par email ou pseudo)
+        const user = await userModel.findByIdentifier(identifier);
         if (!user) {
             throw new Error('Email ou mot de passe incorrect.');
         }
