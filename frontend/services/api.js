@@ -1,6 +1,6 @@
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000/api'
-    : 'https://votre-backend.render.com/api'; // Remplacer par l'URL de production
+    : 'testmybaby-production.up.railway.app'; // Remplacer par l'URL de production
 
 class Api {
     async get(endpoint) {
