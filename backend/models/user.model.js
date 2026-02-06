@@ -2,6 +2,15 @@ const db = require('../db');
 
 class UserModel {
     /**
+     * Trouve un utilisateur par son email ou son pseudo.
+     */
+    async findByIdentifier(identifier) {
+        const query = 'SELECT * FROM Utilisateurs WHERE email = $1 OR pseudo = $2';
+        const { rows } = await db.query(query, [identifier, identifier]);
+        return rows[0];
+    }
+
+    /**
      * Trouve un utilisateur par son email.
      */
     async findByEmail(email) {
