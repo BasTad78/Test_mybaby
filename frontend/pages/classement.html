@@ -1,0 +1,255 @@
+<link rel="stylesheet" href="pages/classement.css">
+
+<div class="page-head">
+  <h1 id="page-title" style="font-weight:800; color:var(--gris-fonce)">Classement Mondial</h1>
+  <div class="ranking-header-controls">
+    <input id="searchBox" class="search-input" placeholder="Rechercher un champion..." aria-label="Rechercher">
+    <button id="btnMyRank" class="btn secondary">Mon Rang</button>
+  </div>
+</div>
+
+<div class="categories" role="tablist">
+  <button class="cat-btn" data-cat="experts">Experts</button>
+  <button class="cat-btn" data-cat="champion">Champion</button>
+  <button class="cat-btn" data-cat="confirme">Confirmé</button>
+  <button class="cat-btn active" data-cat="intermediaire">Intermédiaire</button>
+  <button class="cat-btn" data-cat="debutant">Débutant</button>
+</div>
+
+<div id="ranking-container" class="card" style="padding:0; overflow:hidden">
+  <div id="list" class="ranking-list">
+    <!-- Items appear here -->
+  </div>
+</div>
+
+<!-- Modal Profile -->
+<div id="userModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button id="closeUserModal" class="modal-close"
+      style="position:absolute; right:20px; top:20px; background:none; border:none; font-size:24px; cursor:pointer">×</button>
+    <div id="userDetails"></div>
+  </div>
+</div>
+
+<style>
+  .ranking-header-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .search-input {
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    width: 250px;
+    outline: none;
+    transition: border 0.3s;
+  }
+
+  .search-input:focus {
+    border-color: var(--rouge);
+  }
+
+  .player-item {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .player-item:hover {
+    background: #f9f9f9;
+  }
+
+  .rank {
+    font-weight: 800;
+    font-size: 1.2rem;
+    width: 40px;
+    color: #999;
+  }
+
+  .avatar-sm {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    margin: 0 15px;
+    background: #eee;
+    object-fit: cover;
+  }
+
+  .p-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex: 1;
+  }
+
+  .p-score {
+    font-weight: 800;
+    color: var(--rouge);
+    font-size: 1.1rem;
+  }
+
+  .p-meta {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: 2px;
+  }
+
+  .cat-btn {
+    background: #eee;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .cat-btn.active {
+    background: var(--rouge);
+    color: #fff;
+  }
+
+  .empty-state {
+    padding: 40px;
+    text-align: center;
+    color: #666;
+  }
+</style>
+
+<script type="module">
+  import { userService } from './services/userService.js';
+
+  (async function () {
+    'use strict';
+
+    const listEl = document.getElementById('list');
+    const searchBox = document.getElementById('searchBox');
+    const userModal = document.getElementById('userModal');
+    const userDetails = document.getElementById('userDetails');
+    const closeUserModal = document.getElementById('closeUserModal');
+
+    let allUsers = [];
+    let currentCat = 'intermediaire';
+
+    const categories = {
+      'experts': 2000,
+      'champion': 1800,
+      'confirme': 1600,
+      'intermediaire': 1400,
+      'debutant': 0
+    };
+
+    function getCategory(score) {
+      if (score >= 2000) return 'experts';
+      if (score >= 1800) return 'champion';
+      if (score >= 1600) return 'confirme';
+      if (score >= 1400) return 'intermediaire';
+      return 'debutant';
+    }
+
+    async function fetchData() {
+      try {
+        allUsers = await userService.getAllUsers();
+        console.log("Ranking Data:", allUsers);
+        render();
+      } catch (err) {
+        console.error("Fetch failed:", err);
+        listEl.innerHTML = `<div class="empty-state">
+                <p>⚠️ Impossible de charger les données.</p>
+                <small>${err.message}</small>
+            </div>`;
+      }
+    }
+
+    function render() {
+      const query = (searchBox.value || '').toLowerCase();
+      const filtered = allUsers.filter(u => {
+        const matchesSearch = u.pseudo.toLowerCase().includes(query);
+        const matchesCat = getCategory(u.elo_score) === currentCat;
+        return matchesSearch && matchesCat;
+      });
+
+      if (allUsers.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">La base de données est vide. Signalez-vous !</div>';
+        return;
+      }
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">Aucun joueur dans la catégorie "${currentCat}".</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map((u, i) => `
+            <div class="player-item" data-id="${u.id_utilisateur}">
+                <div class="rank">#${i + 1}</div>
+                <img src="${u.photo_profil || `https://ui-avatars.com/api/?name=${u.pseudo}&background=random&color=fff`}" class="avatar-sm">
+                <div style="flex:1">
+                    <div class="p-name">${u.pseudo}</div>
+                    <div class="p-meta">${u.nombre_victoires || 0}V - ${u.nombre_defaites || 0}D</div>
+                </div>
+                <div class="p-score">${u.elo_score} pts</div>
+            </div>
+        `).join('');
+
+      // Attach click events
+      listEl.querySelectorAll('.player-item').forEach(item => {
+        item.onclick = () => showUser(parseInt(item.dataset.id));
+      });
+    }
+
+    function showUser(id) {
+      const u = allUsers.find(user => user.id_utilisateur === id);
+      if (!u) return;
+
+      userDetails.innerHTML = `
+            <div style="text-align:center">
+                <img src="${u.photo_profil || `https://ui-avatars.com/api/?name=${u.pseudo}&background=random&color=fff&size=128`}" 
+                     style="width:100px; height:100px; border-radius:20px; border:4px solid #f0f0f0; margin-bottom:15px">
+                <h2 style="margin:0">${u.pseudo}</h2>
+                <span class="badge" style="background:var(--rouge); color:white; padding:4px 12px; border-radius:20px; font-size:0.8rem; text-transform:uppercase">${getCategory(u.elo_score)}</span>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:25px">
+                    <div class="card" style="padding:15px; background:#f9f9f9; box-shadow:none">
+                        <small style="color:#777">Points Elo</small>
+                        <div style="font-weight:800; font-size:1.3rem">${u.elo_score}</div>
+                    </div>
+                    <div class="card" style="padding:15px; background:#f9f9f9; box-shadow:none">
+                        <small style="color:#777">Parties</small>
+                        <div style="font-weight:800; font-size:1.3rem">${u.nombre_parties || 0}</div>
+                    </div>
+                </div>
+                
+                <button class="btn primary" style="width:100%; margin-top:20px" onclick="location.hash='#match'">Lui lancer un défi</button>
+            </div>
+        `;
+      userModal.classList.add('show');
+    }
+
+    closeUserModal.onclick = () => userModal.classList.remove('show');
+    searchBox.oninput = render;
+
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCat = btn.dataset.cat;
+        render();
+      };
+    });
+
+    // Initial Fetch
+    await fetchData();
+
+    // Auto-select category if default is empty but others have players
+    if (allUsers.length > 0 && allUsers.filter(u => getCategory(u.elo_score) === currentCat).length === 0) {
+      const firstNotEmpty = Object.keys(categories).find(cat => allUsers.some(u => getCategory(u.elo_score) === cat));
+      if (firstNotEmpty) {
+        document.querySelector(`[data-cat="${firstNotEmpty}"]`).click();
+      }
+    }
+  })();
+</script>

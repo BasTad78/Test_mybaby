@@ -1,0 +1,113 @@
+<link rel="stylesheet" href="pages/inscription.css">
+
+<section class="card" aria-labelledby="page-title">
+  <h1 id="page-title" class="brand">MyBaby</h1>
+
+  <div class="switch" role="tablist" aria-label="Inscription ou connexion">
+    <button id="btnRegister" class="switch-btn" role="tab" aria-selected="false">Inscription</button>
+    <button id="btnLogin" class="switch-btn active" role="tab" aria-selected="true">Connexion</button>
+  </div>
+
+  <!-- INSCRIPTION -->
+  <form id="registerForm" class="form" style="display:none" autocomplete="on" novalidate>
+    <label for="regPseudo">Pseudo</label>
+    <input id="regPseudo" name="pseudo" type="text" autocomplete="username" placeholder="Ex : amina" required>
+
+    <label for="regEmail">Email (optionnel)</label>
+    <input id="regEmail" name="email" type="email" autocomplete="email" placeholder="email@exemple.com">
+
+    <label for="regPassword">Mot de passe</label>
+    <input id="regPassword" name="password" type="password" autocomplete="new-password" placeholder="••••••••" required>
+
+    <div class="actions">
+      <button type="button" id="regCancel" class="btn ghost">Annuler</button>
+      <button type="submit" class="btn primary">S'inscrire et se connecter</button>
+    </div>
+    <div id="regErr" class="msg error" role="alert" aria-live="polite"></div>
+  </form>
+
+  <!-- CONNEXION -->
+  <form id="loginForm" class="form" autocomplete="on" novalidate>
+    <label for="logUser">Pseudo ou email</label>
+    <input id="logUser" name="user" type="text" autocomplete="username" placeholder="Ex : amina" required>
+
+    <label for="logPassword">Mot de passe</label>
+    <input id="logPassword" name="password" type="password" autocomplete="current-password" placeholder="••••••••"
+      required>
+
+    <div class="actions">
+      <button type="submit" class="btn primary">Se connecter</button>
+    </div>
+    <div id="loginErr" class="msg error" role="alert" aria-live="polite"></div>
+  </form>
+</section>
+
+<script type="module">
+  import { userService } from './services/userService.js';
+
+  (function () {
+    'use strict';
+
+    const btnRegister = document.getElementById('btnRegister');
+    const btnLogin = document.getElementById('btnLogin');
+    const registerForm = document.getElementById('registerForm');
+    const loginForm = document.getElementById('loginForm');
+    const regCancel = document.getElementById('regCancel');
+    const loginErr = document.getElementById('loginErr');
+    const regErr = document.getElementById('regErr');
+
+    function toggle(mode) {
+      if (mode === 'register') {
+        registerForm.style.display = 'block';
+        loginForm.style.display = 'none';
+        btnRegister.classList.add('active');
+        btnLogin.classList.remove('active');
+      } else {
+        registerForm.style.display = 'none';
+        loginForm.style.display = 'block';
+        btnLogin.classList.add('active');
+        btnRegister.classList.remove('active');
+      }
+      loginErr.textContent = '';
+      regErr.textContent = '';
+    }
+
+    btnRegister.onclick = () => toggle('register');
+    btnLogin.onclick = () => toggle('login');
+    regCancel.onclick = () => toggle('login');
+
+    loginForm.onsubmit = async (e) => {
+      e.preventDefault();
+      loginErr.textContent = '';
+      const email = e.target.user.value;
+      const password = e.target.password.value;
+
+      try {
+        const user = await userService.login(email, password);
+        localStorage.setItem('mybaby_user', JSON.stringify(user));
+        window.location.hash = '#home'; // Redirection vers accueil
+      } catch (err) {
+        loginErr.textContent = "Identifiants incorrects.";
+      }
+    };
+
+    registerForm.onsubmit = async (e) => {
+      e.preventDefault();
+      regErr.textContent = '';
+      const payload = {
+        pseudo: e.target.pseudo.value,
+        email: e.target.email.value || null,
+        password: e.target.password.value,
+        role: 'joueur' // Par défaut
+      };
+
+      try {
+        const user = await userService.register(payload);
+        localStorage.setItem('mybaby_user', JSON.stringify(user));
+        window.location.hash = '#home';
+      } catch (err) {
+        regErr.textContent = err.message || "Erreur lors de l'inscription.";
+      }
+    };
+  })();
+</script>

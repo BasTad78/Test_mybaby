@@ -1,0 +1,210 @@
+<link rel="stylesheet" href="pages/carte.css">
+<div class="map-container">
+  <aside class="side-panel" id="sidePanel">
+    <div class="side-header">
+      <h2 style="margin:0; font-weight:800; color:var(--rouge)">📍 Lieux Proches</h2>
+      <div id="activeFilter" style="font-size:0.8rem; color:#666; margin-top:4px">Tous les arrondissements</div>
+    </div>
+    <div id="lieuxList" class="lieux-list">
+      <div class="loader-sm">Chargement...</div>
+    </div>
+  </aside>
+
+  <div class="map-wrap">
+    <div id="map" aria-label="Carte des babyfoots"></div>
+
+    <div class="legend" id="mapLegend">
+      <strong>Légende</strong>
+      <div class="legend-item">
+        <img src="assets/icones/soccer-ball_26bd.png" style="width:18px; height:18px">
+        <span>Babyfoot</span>
+      </div>
+      <div class="legend-item">
+        <div style="width:14px; height:2px; background:#ff00ff; border:1px dashed #ff00ff"></div>
+        <span>Arrondissement</span>
+      </div>
+      <div class="legend-item">
+        <img src="assets/icones/raiway_station_4329-1655540952.png" style="width:18px; height:18px">
+        <span>Station Ferrée</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div id="selectWrapper" class="ctrl-group"></div>
+      <button id="btnAdd" class="ctrl-btn" title="Ajouter un lieu">＋ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="logo-bottom-left" aria-hidden="true">
+  <svg width="64" height="64" viewBox="0 0 90 90">
+    <circle cx="45" cy="45" r="40" fill="var(--rouge)" />
+    <text x="45" y="72" text-anchor="middle" fill="var(--beige)" font-family="Arial Black" font-size="10">MYBABY</text>
+  </svg>
+</div>
+
+<script type="module">
+  import { babyfootService } from './services/babyfootService.js';
+
+  (async function () {
+    'use strict';
+
+    if (typeof L === 'undefined') {
+      document.getElementById('map').innerHTML = '<div style="padding:20px; text-align:center">Erreur: Leaflet n\'est pas chargé.</div>';
+      return;
+    }
+
+    if (typeof proj4 !== 'undefined') {
+      proj4.defs("EPSG:2154", "+proj=lcc +lat_1=44 +lat_2=49 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+    }
+
+    const map = L.map('map').setView([48.8566, 2.3522], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+
+    const babyfootIcon = L.icon({
+      iconUrl: 'assets/icones/soccer-ball_26bd.png',
+      iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -16]
+    });
+
+    const stationIcon = L.icon({
+      iconUrl: 'assets/icones/raiway_station_4329-1655540952.png',
+      iconSize: [24, 24], iconAnchor: [12, 24], popupAnchor: [0, -24]
+    });
+
+    let stationsGeoJSON = null;
+    let arrondissementsGeoJSON = null;
+    let allLieux = [];
+    const markerGroup = L.layerGroup().addTo(map);
+    const stationGroup = L.layerGroup().addTo(map);
+    const ardtLayer = L.geoJSON(null, { style: { color: '#ff00ff', weight: 4, fillOpacity: 0.1, dashArray: '5, 5' } }).addTo(map);
+
+    async function fetchGeoJSON(baseUrl) {
+      try {
+        const [shpRes, dbfRes] = await Promise.all([
+          fetch(`${baseUrl}.shp`).then(r => r.arrayBuffer()),
+          fetch(`${baseUrl}.dbf`).then(r => r.arrayBuffer())
+        ]);
+        const geojson = await shp.combine([shp.parseShp(shpRes), shp.parseDbf(dbfRes)]);
+
+        geojson.features = geojson.features.filter(f => f.geometry && f.geometry.coordinates);
+
+        const reprojPoint = (pt) => {
+          if (typeof proj4 === 'undefined' || pt[0] < 100000) return pt;
+          return proj4("EPSG:2154", "EPSG:4326", pt);
+        };
+
+        const recursiveReproj = (coords) => {
+          if (!Array.isArray(coords)) return coords;
+          if (typeof coords[0] === 'number') return reprojPoint(coords);
+          return coords.map(recursiveReproj);
+        };
+
+        geojson.features.forEach(f => {
+          f.geometry.coordinates = recursiveReproj(f.geometry.coordinates);
+        });
+        return geojson;
+      } catch (e) { console.error(`Erreur ${baseUrl}:`, e); return null; }
+    }
+
+    async function initLayers() {
+      arrondissementsGeoJSON = await fetchGeoJSON('assets/couches/Arrondissement_Paris');
+      if (arrondissementsGeoJSON) {
+        ardtLayer.addData(arrondissementsGeoJSON);
+        const sel = document.createElement('select');
+        sel.className = "ctrl-btn";
+        sel.innerHTML = '<option value="">Tous les arrondissements</option>' +
+          arrondissementsGeoJSON.features.map(f => {
+            const p = f.properties;
+            const n = p.nom || p.NOM || p.l_ar || p.l_ar_off || p.NOM_ARND || "Ardt";
+            const i = (p.c_ar || p.OBJECTID || n).toString();
+            return `<option value="${i}">${n}</option>`;
+          }).sort().join('');
+        document.getElementById('selectWrapper').appendChild(sel);
+        sel.onchange = (e) => loadLieux(e.target.value);
+      }
+      stationsGeoJSON = await fetchGeoJSON('assets/couches/stations_ferree_Paris');
+      if (stationsGeoJSON) {
+        stationsGeoJSON.features = stationsGeoJSON.features.filter(f => f.geometry.type === 'Point');
+        L.geoJSON(stationsGeoJSON, { pointToLayer: (f, l) => L.marker(l, { icon: stationIcon }) }).addTo(stationGroup);
+      }
+      loadLieux();
+    }
+
+    async function loadLieux(filterId = null) {
+      const listEl = document.getElementById('lieuxList');
+      const labelEl = document.getElementById('activeFilter');
+      try {
+        if (allLieux.length === 0) allLieux = await babyfootService.getAllLieux();
+        markerGroup.clearLayers();
+        let filtered = allLieux;
+
+        if (filterId && arrondissementsGeoJSON) {
+          const ar = arrondissementsGeoJSON.features.find(f => {
+            const p = f.properties;
+            return (p.c_ar || p.OBJECTID || p.nom || p.NOM || p.l_ar || p.l_ar_off).toString() === filterId;
+          });
+          if (ar) {
+            labelEl.textContent = ar.properties.nom || ar.properties.NOM || "Filtré";
+            filtered = allLieux.filter(l => {
+              const x = parseFloat(l.xcoord), y = parseFloat(l.ycoord);
+              if (isNaN(x) || isNaN(y)) return false;
+              try { return turf.booleanPointInPolygon(turf.point([x, y]), ar); } catch (e) { return false; }
+            });
+            const bounds = L.geoJSON(ar).getBounds();
+            if (bounds.isValid()) map.fitBounds(bounds, { padding: [30, 30] });
+          }
+        } else { labelEl.textContent = "Tous les arrondissements"; }
+
+        listEl.innerHTML = filtered.length ? filtered.map(l => `
+          <div class="lieu-card" onclick="window.markers['${l.id_babyfoot}'].openPopup(); map.setView(window.markers['${l.id_babyfoot}'].getLatLng(), 16)">
+            <div style="font-weight:800; color:var(--rouge)">${l.nom_lieu}</div>
+            <div style="font-size:0.8rem; color:#666">${l.adresse || ''}</div>
+          </div>`).join('') : '<div class="empty-msg">Aucun lieu trouvé.</div>';
+
+        window.markers = {};
+        filtered.forEach(l => {
+          const lat = parseFloat(l.ycoord), lng = parseFloat(l.xcoord);
+          if (isNaN(lat) || isNaN(lng)) return;
+
+          let sInfo = "";
+          if (stationsGeoJSON && stationsGeoJSON.features.length) {
+            try {
+              const babyPt = turf.point([lng, lat]);
+              const nearest = turf.nearestPoint(babyPt, stationsGeoJSON);
+              if (nearest) {
+                const p = nearest.properties;
+                const d = turf.distance(babyPt, nearest, { units: 'meters' }).toFixed(0);
+
+                let sName = "Inconnue";
+                const nameKeys = ['nom_zda', 'nom_ptes', 'nom_gares', 'libelle', 'label', 'nom', 'NOM', 'TEXT'];
+                for (let key of nameKeys) {
+                  const val = p[key] || p[key.toUpperCase()];
+                  if (val) { sName = val; break; }
+                }
+
+                const sLines = p.res_com || p.RES_COM || p.lignes || "N/A";
+                sInfo = `<div style="margin-top:8px; padding:8px; background:#f0f7ff; border-radius:8px; border-left:4px solid #3388ff; font-size:0.8rem">
+                    <strong>Station: ${sName}</strong><br>
+                    Lignes: ${sLines} (${d}m)
+                  </div>`;
+              }
+            } catch (e) { }
+          }
+          const m = L.marker([lat, lng], { icon: babyfootIcon }).addTo(markerGroup);
+          window.markers[l.id_babyfoot] = m;
+          m.bindPopup(`<h3 style="color:var(--rouge);margin:0">${l.nom_lieu}</h3><p style="font-size:0.9rem;margin:5px 0">${l.adresse || ''}</p>${sInfo}`);
+        });
+      } catch (e) { console.error(e); }
+    }
+
+    document.getElementById('btnAdd').onclick = () => {
+      alert("Cliquez sur la carte...");
+      map.once('click', e => {
+        const n = prompt("Nom :");
+        if (n) alert(`Simulé: ${n}`);
+      });
+    };
+
+    initLayers();
+  })();
+</script>
