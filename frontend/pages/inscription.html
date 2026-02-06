@@ -79,15 +79,22 @@
     loginForm.onsubmit = async (e) => {
       e.preventDefault();
       loginErr.textContent = '';
+      const btn = e.target.querySelector('button[type="submit"]');
       const email = e.target.user.value;
       const password = e.target.password.value;
 
       try {
+        btn.disabled = true;
+        btn.textContent = "Connexion...";
         const user = await userService.login(email, password);
         localStorage.setItem('mybaby_user', JSON.stringify(user));
         window.location.hash = '#home'; // Redirection vers accueil
       } catch (err) {
-        loginErr.textContent = "Identifiants incorrects.";
+        console.error("Login Error:", err);
+        loginErr.textContent = err.message || "Identifiants incorrects ou serveur injoignable.";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Se connecter";
       }
     };
 
