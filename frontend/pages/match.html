@@ -201,29 +201,55 @@
 
             // Bind actions
             panelContent.querySelectorAll('.action-accept').forEach(btn => {
-              btn.onclick = async () => {
+              btn.onclick = async (e) => {
+                e.preventDefault();
+                const mid = btn.dataset.id;
+                console.log("Accepting match:", mid);
                 if (confirm("Accepter ce défi ?")) {
-                  await matchService.updateStatus(btn.dataset.id, 'Accepté');
-                  alert("Défi accepté ! Préparez-vous au match 🎯");
-                  switchTab('duel');
-                  if (window.checkMatchNotifications) window.checkMatchNotifications();
+                  try {
+                    await matchService.updateStatus(mid, 'Accepté');
+                    alert("🎯 Défi accepté ! Préparez-vous au match");
+                    await switchTab('duel');
+                    if (window.checkMatchNotifications) window.checkMatchNotifications();
+                  } catch (err) {
+                    console.error("Accept error:", err);
+                    alert("Erreur lors de l'acceptation : " + err.message);
+                  }
                 }
               };
             });
+
             panelContent.querySelectorAll('.action-refuse').forEach(btn => {
-              btn.onclick = async () => {
+              btn.onclick = async (e) => {
+                e.preventDefault();
+                const mid = btn.dataset.id;
+                console.log("Refusing match:", mid);
                 if (confirm("Refuser ce défi ?")) {
-                  await matchService.updateStatus(btn.dataset.id, 'Refusé');
-                  switchTab('duel');
-                  if (window.checkMatchNotifications) window.checkMatchNotifications();
+                  try {
+                    await matchService.updateStatus(mid, 'Refusé');
+                    await switchTab('duel');
+                    if (window.checkMatchNotifications) window.checkMatchNotifications();
+                  } catch (err) {
+                    console.error("Refuse error:", err);
+                    alert("Erreur lors du refus : " + err.message);
+                  }
                 }
               };
             });
+
             panelContent.querySelectorAll('.action-cancel').forEach(btn => {
-              btn.onclick = async () => {
+              btn.onclick = async (e) => {
+                e.preventDefault();
+                const mid = btn.dataset.id;
+                console.log("Cancelling match:", mid);
                 if (confirm("Annuler votre défi ?")) {
-                  await matchService.updateStatus(btn.dataset.id, 'Annulé');
-                  switchTab('duel');
+                  try {
+                    await matchService.updateStatus(mid, 'Annulé');
+                    await switchTab('duel');
+                  } catch (err) {
+                    console.error("Cancel error:", err);
+                    alert("Erreur lors de l'annulation : " + err.message);
+                  }
                 }
               };
             });
