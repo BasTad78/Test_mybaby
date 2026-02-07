@@ -95,12 +95,12 @@ main#app {
   padding: 0 20px;
 }
 
-/* Page plein écran (Carte) */
+/* Page plein écran (Carte) - Adaptée pour le footer */
 body.fullscreen-page {
-  overflow: hidden;
+  /* On retire le overflow:hidden et height:100vh pour voir le footer */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100vh;
 }
 
 body.fullscreen-page main#app {
@@ -108,9 +108,13 @@ body.fullscreen-page main#app {
   max-width: none;
   margin: 0;
   padding: 0;
-  min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+body.fullscreen-page #footer {
+  margin-top: 0;
+  /* Plus propre sur la carte */
 }
 
 /* body.fullscreen-page #footer {
