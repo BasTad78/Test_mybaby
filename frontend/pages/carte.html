@@ -1,6 +1,9 @@
 <link rel="stylesheet" href="pages/carte.css">
 <div class="map-container">
   <aside class="side-panel" id="sidePanel">
+    <button class="drawer-handle" id="drawerHandle" aria-label="Déplier la liste">
+      <span></span>
+    </button>
     <div class="side-header">
       <h2 style="margin:0; font-weight:800; color:var(--rouge)">📍 Lieux Proches</h2>
       <div id="activeFilter" style="font-size:0.8rem; color:#666; margin-top:4px">Tous les arrondissements</div>
@@ -323,6 +326,15 @@
         alert("Erreur lors de l'ajout : " + err.message);
       }
     };
+
+    // Drawer logic for mobile
+    const sidePanel = document.getElementById('sidePanel');
+    const drawerHandle = document.getElementById('drawerHandle');
+    if (drawerHandle && sidePanel) {
+      drawerHandle.addEventListener('click', () => {
+        sidePanel.classList.toggle('expanded');
+      });
+    }
 
     initLayers();
   })();
