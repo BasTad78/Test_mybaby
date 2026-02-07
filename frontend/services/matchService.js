@@ -15,5 +15,8 @@ export const matchService = {
     },
     updateResult: async (id, result) => {
         return await api.put(`/matches/${id}/result`, result);
+    },
+    updateStatus: async (id, status) => {
+        return await api.put(`/matches/${id}/status`, { status });
     }
 };
