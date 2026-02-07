@@ -54,8 +54,52 @@ class MatchService {
         }
     }
 
+    /**
+     * Calcule les nouveaux scores ELO pour les deux joueurs
+     * @param {number} player1Elo - ELO actuel du joueur 1
+     * @param {number} player2Elo - ELO actuel du joueur 2
+     * @param {number} player1Score - Score du joueur 1
+     * @param {number} player2Score - Score du joueur 2
+     * @returns {object} - Nouveaux ELO pour les deux joueurs
+     */
+    calculateEloChange(player1Elo, player2Elo, player1Score, player2Score) {
+        const K = 32; // K-factor standard
+
+        // Scores attendus (Expected scores)
+        const expectedScore1 = 1 / (1 + Math.pow(10, (player2Elo - player1Elo) / 400));
+        const expectedScore2 = 1 / (1 + Math.pow(10, (player1Elo - player2Elo) / 400));
+
+        // Scores réels (1 pour victoire, 0 pour défaite)
+        const actualScore1 = player1Score > player2Score ? 1 : 0;
+        const actualScore2 = player2Score > player1Score ? 1 : 0;
+
+        // Calcul des changements
+        const eloChange1 = Math.round(K * (actualScore1 - expectedScore1));
+        const eloChange2 = Math.round(K * (actualScore2 - expectedScore2));
+
+        return {
+            player1NewElo: player1Elo + eloChange1,
+            player2NewElo: player2Elo + eloChange2
+        };
+    }
+
     async validateMatch(id, data) {
-        // Validation et mise à jour des scores
+        const userService = require('./user.service');
+
+        // Récupérer les infos du match et des joueurs
+        const match = await this.getMatchById(id);
+        const player1 = await userService.getUserById(match.id_joueur1);
+        const player2 = await userService.getUserById(match.id_joueur2);
+
+        // Calculer les nouveaux scores ELO
+        const { player1NewElo, player2NewElo } = this.calculateEloChange(
+            player1.elo_score,
+            player2.elo_score,
+            data.score_joueur1,
+            data.score_joueur2
+        );
+
+        // Mise à jour du match avec les scores
         const query = `
             UPDATE Matchs 
             SET statut_validation = 'Validé', 
@@ -65,7 +109,14 @@ class MatchService {
             RETURNING *
         `;
         const { rows } = await db.query(query, [id, data.score_joueur1, data.score_joueur2]);
-        // TODO: Mettre à jour les ELO des joueurs ici
+
+        // Mise à jour des ELO des deux joueurs
+        const player1Won = data.score_joueur1 > data.score_joueur2;
+        const player2Won = data.score_joueur2 > data.score_joueur1;
+
+        await userService.updateElo(match.id_joueur1, player1NewElo, player1Won);
+        await userService.updateElo(match.id_joueur2, player2NewElo, player2Won);
+
         return rows[0];
     }
 

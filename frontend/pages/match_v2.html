@@ -48,6 +48,33 @@
   </div>
 </div>
 
+<!-- Modal Score Entry -->
+<div id="scoreModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button id="closeScoreModal" class="modal-close"
+      style="position:absolute; right:20px; top:20px; background:none; border:none; font-size:24px; cursor:pointer">×</button>
+    <h2 style="margin-top:0">🏆 Enregistrer le résultat</h2>
+    <form id="scoreForm" style="display:flex; flex-direction:column; gap:20px">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
+        <div>
+          <label id="player1Name" style="font-weight:700; display:block; margin-bottom:5px">Joueur 1</label>
+          <input type="number" id="scorePlayer1" min="0" max="10" required class="search-input" placeholder="Score"
+            style="width:100%">
+        </div>
+        <div>
+          <label id="player2Name" style="font-weight:700; display:block; margin-bottom:5px">Joueur 2</label>
+          <input type="number" id="scorePlayer2" min="0" max="10" required class="search-input" placeholder="Score"
+            style="width:100%">
+        </div>
+      </div>
+      <div id="scoreError"
+        style="color:var(--rouge); font-size:0.85rem; display:none; padding:10px; background:#fff0f0; border-radius:8px">
+      </div>
+      <button type="submit" class="btn primary" style="padding:15px">✅ Valider le match</button>
+    </form>
+  </div>
+</div>
+
 <style>
   .match-layout {
     display: flex;
@@ -181,13 +208,39 @@
         } else {
           panelTitle.textContent = "Mes Duels & Défis";
           const matches = await MatchChallengeService.getAllMatches();
-          const myChallenges = matches.filter(m => (m.id_joueur1 == uid || m.id_joueur2 == uid) && m.statut_validation === 'En attente');
+          // On affiche les défis en attente OU les défis acceptés (pour saisir le score)
+          const myChallenges = matches.filter(m =>
+            (m.id_joueur1 == uid || m.id_joueur2 == uid) &&
+            (m.statut_validation === 'En attente' || m.statut_validation === 'Accepté')
+          );
 
           if (myChallenges.length === 0) {
-            panelContent.innerHTML = '<div class="empty-msg">Vous n\'avez aucun défi en attente.</div>';
+            panelContent.innerHTML = '<div class="empty-msg">Vous n\'avez aucun défi en cours.</div>';
           } else {
             panelContent.innerHTML = myChallenges.map(m => {
               const isReceived = m.id_joueur2 == uid;
+
+              if (m.statut_validation === 'Accepté') {
+                return `
+                  <div class="match-card-sm" style="border-left: 4px solid var(--bleu)">
+                      <div style="display:flex; justify-content:space-between; align-items:center">
+                          <strong>⚔️ Match contre ${m.id_joueur1 == uid ? m.joueur2_nom : m.joueur1_nom}</strong>
+                          <span class="badge" style="background:var(--bleu); color:white; font-size:0.75rem">Accepté</span>
+                      </div>
+                      <div style="margin-top:8px; font-size:0.85rem">
+                          📍 ${m.nom_lieu} (${m.ville})<br>
+                          📅 ${new Date(m.date_match).toLocaleDateString()}
+                      </div>
+                      <div style="margin-top:12px">
+                          <button class="btn primary btn-sm action-score" 
+                                  data-id="${m.id_match}"
+                                  data-j1name="${m.joueur1_nom}"
+                                  data-j2name="${m.joueur2_nom}"
+                                  style="padding:6px 12px; font-size:0.8rem">🏆 Saisir le score</button>
+                      </div>
+                  </div>`;
+              }
+
               return `
                 <div class="match-card-sm" style="border-left: 4px solid ${isReceived ? 'var(--rouge)' : '#ccc'}">
                     <div style="display:flex; justify-content:space-between; align-items:center">
@@ -211,7 +264,19 @@
                 </div>`;
             }).join('');
 
-            // Bind actions
+            // Bind Score Action
+            panelContent.querySelectorAll('.action-score').forEach(btn => {
+              btn.onclick = (e) => {
+                e.preventDefault();
+                const scoreModal = document.getElementById('scoreModal');
+                document.getElementById('player1Name').textContent = btn.dataset.j1name;
+                document.getElementById('player2Name').textContent = btn.dataset.j2name;
+                document.getElementById('scoreForm').dataset.matchId = btn.dataset.id;
+                scoreModal.classList.add('show');
+              };
+            });
+
+            // Bind actions (Accept/Refuse/Cancel)
             panelContent.querySelectorAll('.action-accept').forEach(btn => {
               btn.onclick = async (e) => {
                 e.preventDefault();
@@ -345,6 +410,50 @@
         matchError.style.display = 'block';
       }
     };
+
+    // Score modal handlers
+    document.getElementById('closeScoreModal').onclick = () => {
+      document.getElementById('scoreModal').classList.remove('show');
+    };
+
+    document.getElementById('scoreForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const scoreError = document.getElementById('scoreError');
+      scoreError.style.display = 'none';
+
+      const matchId = e.target.dataset.matchId;
+      const score1 = parseInt(document.getElementById('scorePlayer1').value);
+      const score2 = parseInt(document.getElementById('scorePlayer2').value);
+
+      if (isNaN(score1) || isNaN(score2)) {
+        scoreError.textContent = "Veuillez saisir des scores valides.";
+        scoreError.style.display = 'block';
+        return;
+      }
+
+      if (score1 === score2) {
+        if (!confirm("Le match est-il vraiment nul ? En babyfoot, il y a souvent un gagnant !")) {
+          return;
+        }
+      }
+
+      try {
+        await MatchChallengeService.validateMatch(matchId, {
+          score_joueur1: score1,
+          score_joueur2: score2
+        });
+
+        alert('🎉 Match validé ! Les scores ELO ont été mis à jour.');
+        document.getElementById('scoreModal').classList.remove('show');
+        // On bascule sur l'onglet stats pour voir le match validé
+        await switchTab('stats');
+      } catch (err) {
+        console.error("Score validation error:", err);
+        scoreError.textContent = err.message || "Erreur lors de la validation du score.";
+        scoreError.style.display = 'block';
+      }
+    };
+
 
     // Initial load
     await switchTab('amis');
