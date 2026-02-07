@@ -157,17 +157,33 @@
       arrondissementsGeoJSON = await fetchGeoJSON('assets/couches/Arrondissement_Paris');
       if (arrondissementsGeoJSON) {
         ardtLayer.addData(arrondissementsGeoJSON);
-        const sel = document.createElement('select');
-        sel.className = "ctrl-btn";
-        sel.innerHTML = '<option value="">Tous les arrondissements</option>' +
+
+        // Arrondissement Filter
+        const selArdt = document.createElement('select');
+        selArdt.id = "filterArdt";
+        selArdt.className = "ctrl-btn";
+        selArdt.innerHTML = '<option value="">Arrondissements</option>' +
           arrondissementsGeoJSON.features.map(f => {
             const p = f.properties;
             const n = p.nom || p.NOM || p.l_ar || p.l_ar_off || p.NOM_ARND || "Ardt";
             const i = (p.c_ar || p.OBJECTID || n).toString();
             return `<option value="${i}">${n}</option>`;
           }).sort().join('');
-        document.getElementById('selectWrapper').appendChild(sel);
-        sel.onchange = (e) => loadLieux(e.target.value);
+        document.getElementById('selectWrapper').appendChild(selArdt);
+        selArdt.onchange = () => loadLieux();
+
+        // Price Filter
+        const selPrice = document.createElement('select');
+        selPrice.id = "filterPrice";
+        selPrice.className = "ctrl-btn";
+        selPrice.innerHTML = `
+          <option value="">Prix Max</option>
+          <option value="0.5">0.50 €</option>
+          <option value="1">1.00 €</option>
+          <option value="2">2.00 €</option>
+        `;
+        document.getElementById('selectWrapper').appendChild(selPrice);
+        selPrice.onchange = () => loadLieux();
       }
       stationsGeoJSON = await fetchGeoJSON('assets/couches/stations_ferree_Paris');
       if (stationsGeoJSON) {
@@ -177,22 +193,26 @@
       loadLieux();
     }
 
-    async function loadLieux(filterId = null) {
+    async function loadLieux() {
       const listEl = document.getElementById('lieuxList');
       const labelEl = document.getElementById('activeFilter');
+      const filterArdt = document.getElementById('filterArdt')?.value;
+      const filterPrice = document.getElementById('filterPrice')?.value;
+
       try {
         if (allLieux.length === 0) allLieux = await babyfootService.getAllLieux();
         markerGroup.clearLayers();
         let filtered = allLieux;
 
-        if (filterId && arrondissementsGeoJSON) {
+        // Apply Ardt Filter
+        if (filterArdt && arrondissementsGeoJSON) {
           const ar = arrondissementsGeoJSON.features.find(f => {
             const p = f.properties;
-            return (p.c_ar || p.OBJECTID || p.nom || p.NOM || p.l_ar || p.l_ar_off).toString() === filterId;
+            return (p.c_ar || p.OBJECTID || p.nom || p.NOM || p.l_ar || p.l_ar_off).toString() === filterArdt;
           });
           if (ar) {
             labelEl.textContent = ar.properties.nom || ar.properties.NOM || "Filtré";
-            filtered = allLieux.filter(l => {
+            filtered = filtered.filter(l => {
               const x = parseFloat(l.xcoord), y = parseFloat(l.ycoord);
               if (isNaN(x) || isNaN(y)) return false;
               try { return turf.booleanPointInPolygon(turf.point([x, y]), ar); } catch (e) { return false; }
@@ -202,10 +222,17 @@
           }
         } else { labelEl.textContent = "Tous les arrondissements"; }
 
+        // Apply Price Filter
+        if (filterPrice) {
+          const maxP = parseFloat(filterPrice);
+          filtered = filtered.filter(l => parseFloat(l.prix || 0) <= maxP);
+        }
+
         listEl.innerHTML = filtered.length ? filtered.map(l => `
           <div class="lieu-card" onclick="window.markers['${l.id_lieu}'].openPopup(); map.setView(window.markers['${l.id_lieu}'].getLatLng(), 18)">
             <div style="font-weight:800; color:var(--rouge)">${l.nom_lieu}</div>
             <div style="font-size:0.8rem; color:#666">${l.adresse || ''}</div>
+            <div style="font-size:0.75rem; font-weight:700; margin-top:4px">${l.prix ? l.prix + ' €' : 'Gratuit'} • ${l.nom_modele || 'Modèle inconnu'}</div>
           </div>`).join('') : '<div class="empty-msg">Aucun lieu trouvé.</div>';
 
         window.markers = {};
@@ -239,7 +266,25 @@
           }
           const m = L.marker([lat, lng], { icon: babyfootIcon }).addTo(markerGroup);
           window.markers[l.id_lieu] = m;
-          m.bindPopup(`<h3 style="color:var(--rouge);margin:0">${l.nom_lieu}</h3><p style="font-size:0.9rem;margin:5px 0">${l.adresse || ''}</p>${sInfo}`);
+
+          const popupContent = `
+            <div style="min-width:180px">
+              <h3 style="color:var(--rouge);margin:0 0 4px 0">${l.nom_lieu}</h3>
+              <p style="font-size:0.85rem;margin:0;color:#555">${l.adresse || ''}</p>
+              <div style="margin-top:8px; display:flex; gap:8px; font-size:0.8rem">
+                <span style="background:var(--rouge); color:#fff; padding:2px 6px; border-radius:4px; font-weight:700">${l.prix ? l.prix + ' €' : 'Gratuit'}</span>
+                <span style="background:#eee; padding:2px 6px; border-radius:4px">${l.nom_modele || 'Modèle classique'}</span>
+              </div>
+              ${sInfo}
+            </div>
+          `;
+
+          m.bindPopup(popupContent);
+
+          // Auto-zoom on marker click
+          m.on('click', () => {
+            map.setView([lat, lng], 18);
+          });
         });
       } catch (e) { console.error(e); }
     }
