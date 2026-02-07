@@ -56,40 +56,6 @@
   </div>
 </div>
 
-<!-- Modal Ajout Babyfoot -->
-<div id="babyfootModal" class="modal" aria-hidden="true">
-  <div class="modal-content">
-    <button id="closeBabyfootModal" class="modal-close"
-      style="position:absolute; right:15px; top:15px; background:none; border:none; font-size:24px; cursor:pointer">×</button>
-    <h2 style="margin-top:0">Ajouter un Babyfoot</h2>
-    <form id="babyfootForm" style="display:flex; flex-direction:column; gap:12px">
-      <div>
-        <label style="font-weight:700">Nom du lieu</label>
-        <input name="nom_lieu" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd" required
-          placeholder="Ex: Bar des Amis">
-      </div>
-      <div>
-        <label style="font-weight:700">Adresse</label>
-        <input name="adresse" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd" required
-          placeholder="12 rue de Paris">
-      </div>
-      <div style="display:flex; gap:10px">
-        <div style="flex:1">
-          <label style="font-weight:700">Ville</label>
-          <input name="ville" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd" required
-            placeholder="Paris">
-        </div>
-        <div style="flex:1">
-          <label style="font-weight:700">Modèle</label>
-          <select id="modelSelect" name="id_modele"
-            style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd"></select>
-        </div>
-      </div>
-      <button type="submit" class="btn primary" style="margin-top:10px">Enregistrer</button>
-    </form>
-  </div>
-</div>
-
 <style>
   .profile-grid {
     display: grid;
@@ -272,16 +238,17 @@
       const listContainer = document.getElementById('babyfoot-list');
       try {
         const data = await babyfootService.getAllBabyfoots();
-        const myBars = data.filter(b => b.id_utilisateur === uid);
+        // Use loose equality for safety with potential string/num mismatch, though both should be nums now
+        const myBars = data.filter(b => b.id_utilisateur == uid);
 
         if (myBars.length > 0) {
           listContainer.innerHTML = myBars.map(b => `
                         <div class="bar-item-p">
                             <div>
                                 <div style="font-weight:700">${b.nom_lieu}</div>
-                                <small style="color:#999">${b.ville}</small>
+                                <small style="color:#999">${b.adresse || b.ville}</small>
                             </div>
-                            <span class="badge" style="background:#f0f0f0">${b.nom_modele}</span>
+                            <span class="badge" style="background:#f0f0f0; padding:4px 10px; border-radius:8px; font-size:0.8rem; font-weight:700">${b.nom_modele}</span>
                         </div>
                     `).join('');
         } else {
@@ -299,63 +266,10 @@
       }
     };
 
-    // Logic for Add Babyfoot
-    document.getElementById('btnAddBabyfoot').onclick = async () => {
-      try {
-        const models = await babyfootService.getModels();
-        const select = document.getElementById('modelSelect');
-        select.innerHTML = models.map(m => `<option value="${m.id_modele}">${m.marque} ${m.nom_modele}</option>`).join('');
-        document.getElementById('babyfootModal').classList.add('show');
-      } catch (e) {
-        alert("Erreur lors de la récupération des modèles.");
-      }
-    };
-
-    document.getElementById('closeBabyfootModal').onclick = () => {
-      document.getElementById('babyfootModal').classList.remove('show');
-    };
-
-    document.getElementById('babyfootForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const btn = e.target.querySelector('button[type="submit"]');
-      const originalBtnText = btn.textContent;
-
-      const formData = new FormData(e.target);
-      const payload = Object.fromEntries(formData.entries());
-      payload.id_utilisateur = uid;
-
-      try {
-        btn.disabled = true;
-        btn.textContent = "Géolocalisation...";
-
-        // Géocodage via l'API Adresse
-        const query = `${payload.adresse}, ${payload.ville}`;
-        const geoRes = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=1`);
-        const geoData = await geoRes.json();
-
-        if (geoData.features && geoData.features.length > 0) {
-          const [lng, lat] = geoData.features[0].geometry.coordinates;
-          payload.xcoord = lng;
-          payload.ycoord = lat;
-        } else {
-          if (!confirm("Adresse non localisée précisément. Voulez-vous quand même enregistrer (il n'apparaîtra pas sur la carte) ?")) {
-            btn.disabled = false;
-            btn.textContent = originalBtnText;
-            return;
-          }
-        }
-
-        btn.textContent = "Enregistrement...";
-        await babyfootService.createBabyfoot(payload);
-        alert("Babyfoot ajouté avec succès !");
-        document.getElementById('babyfootModal').classList.remove('show');
-        loadMyBabyfoots();
-      } catch (err) {
-        alert("Erreur lors de l'ajout : " + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = originalBtnText;
-      }
+    // Redirect Add Babyfoot to Map for better UX/Positioning
+    document.getElementById('btnAddBabyfoot').onclick = () => {
+      alert("Pour une géolocalisation précise, l'ajout se fait directement via la carte. Cliquez sur le bouton '+' de la carte puis sur l'emplacement exact.");
+      window.location.hash = '#map';
     };
 
     await loadProfile();
