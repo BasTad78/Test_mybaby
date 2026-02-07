@@ -44,6 +44,36 @@
       </section>
 
       <section class="card" style="margin-top:24px">
+        <h2 style="margin-top:0">Statistiques de Jeu</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <label>Matchs Joués</label>
+            <div id="stat-parties">0</div>
+          </div>
+          <div class="stat-card win">
+            <label>Victoires</label>
+            <div id="stat-victoires">0</div>
+          </div>
+          <div class="stat-card loss">
+            <label>Défaites</label>
+            <div id="stat-defaites">0</div>
+          </div>
+          <div class="stat-card">
+            <label>ELO Min / Max</label>
+            <div id="stat-elo-range">1500 / 1500</div>
+          </div>
+          <div class="stat-card streak">
+            <label>Série Actuelle</label>
+            <div id="stat-streak-now">0</div>
+          </div>
+          <div class="stat-card streak-max">
+            <label>Série Max</label>
+            <div id="stat-streak-max">0</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:24px">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
           <h2 style="margin:0">Mes Babyfoots</h2>
           <button id="btnAddBabyfoot" class="btn primary">＋ Ajouter</button>
@@ -196,6 +226,62 @@
   .bar-item-p:last-child {
     border: none;
   }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 15px;
+  }
+
+  .stat-card {
+    background: #fdfdfd;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #f0f0f0;
+    text-align: center;
+  }
+
+  .stat-card label {
+    display: block;
+    font-size: 0.7rem;
+    color: #999;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .stat-card div {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--gris-fonce);
+  }
+
+  .stat-card.win div {
+    color: #2ecc71;
+  }
+
+  .stat-card.loss div {
+    color: #e74c3c;
+  }
+
+  .stat-card.streak div {
+    color: #f1c40f;
+  }
+
+  .stat-card.streak-max div {
+    color: #f39c12;
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .profile-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 
 <script type="module">
@@ -222,8 +308,16 @@
         document.getElementById('display-date').textContent = profile.date_inscription ? new Date(profile.date_inscription).toLocaleDateString() : 'Inconnue';
         document.getElementById('stat-elo').textContent = profile.elo_score || 1500;
         document.getElementById('display-role').textContent = "Compte " + (profile.role || 'joueur');
-
         document.getElementById('display-avatar').src = profile.photo_profil || `https://ui-avatars.com/api/?name=${profile.pseudo}&background=random&color=fff&size=128`;
+
+        // Extended Stats
+        document.getElementById('stat-parties').textContent = profile.nombre_parties || 0;
+        document.getElementById('stat-victoires').textContent = profile.nombre_victoires || 0;
+        document.getElementById('stat-defaites').textContent = profile.nombre_defaites || 0;
+        document.getElementById('stat-elo-range').textContent = `${profile.elo_min || 1500} / ${profile.elo_max || 1500}`;
+        document.getElementById('stat-streak-now').textContent = profile.serie_victoires_actuelle || 0;
+        document.getElementById('stat-streak-max').textContent = profile.serie_victoires_max || 0;
+
       } catch (err) {
         console.error("Profile load err:", err);
         // If 401/404, maybe session is dead
