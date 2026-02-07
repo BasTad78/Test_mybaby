@@ -132,8 +132,10 @@
     let orgaMarker = null;
 
     function initOrgaMap() {
-      if (orgaMap) return;
+      if (orgaMap || typeof L === 'undefined') return;
       setTimeout(() => {
+        const mapEl = document.getElementById('regOrgaMap');
+        if (!mapEl) return;
         orgaMap = L.map('regOrgaMap').setView([48.8566, 2.3522], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(orgaMap);
         orgaMap.on('click', (e) => {
@@ -141,7 +143,7 @@
           orgaMarker = L.marker(e.latlng).addTo(orgaMap);
           document.getElementById('regOrgaAddrVal').value = `${e.latlng.lat},${e.latlng.lng}`;
         });
-      }, 100);
+      }, 300);
     }
 
     function toggle(mode) {
