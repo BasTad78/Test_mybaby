@@ -193,8 +193,6 @@
       loadLieux();
     }
 
-    let allModels = [];
-
     async function loadLieux() {
       const listEl = document.getElementById('lieuxList');
       const labelEl = document.getElementById('activeFilter');
@@ -202,19 +200,10 @@
       const filterPrice = document.getElementById('filterPrice')?.value;
 
       try {
-        if (allModels.length === 0) allModels = await babyfootService.getModels();
-        if (allLieux.length === 0) allLieux = await babyfootService.getAllLieux();
+        if (allLieux.length === 0) allLieux = await babyfootService.getAllBabyfoots();
 
         markerGroup.clearLayers();
         let filtered = allLieux;
-
-        // Map model names if missing
-        filtered.forEach(l => {
-          if (!l.nom_modele && l.id_modele) {
-            const m = allModels.find(mod => mod.id_modele == l.id_modele);
-            if (m) l.nom_modele = m.nom_modele;
-          }
-        });
 
         // Apply Ardt Filter
         if (filterArdt && arrondissementsGeoJSON) {
@@ -246,7 +235,8 @@
         }
 
         listEl.innerHTML = filtered.length ? filtered.map(l => {
-          const displayPrice = l.prix ? (l.prix.includes('€') ? l.prix : l.prix + ' €') : 'Gratuit';
+          const p = l.prix || '';
+          const displayPrice = (p.includes('€') || p.toLowerCase().includes('gratuit') || p === '') ? (p || 'Gratuit') : p + ' €';
           return `
           <div class="lieu-card" onclick="window.markers['${l.id_lieu}'].openPopup(); map.setView(window.markers['${l.id_lieu}'].getLatLng(), 18)">
             <div style="font-weight:800; color:var(--rouge)">${l.nom_lieu}</div>
@@ -287,7 +277,8 @@
           const m = L.marker([lat, lng], { icon: babyfootIcon }).addTo(markerGroup);
           window.markers[l.id_lieu] = m;
 
-          const displayPrice = l.prix ? (l.prix.includes('€') ? l.prix : l.prix + ' €') : 'Gratuit';
+          const p = l.prix || '';
+          const displayPrice = (p.includes('€') || p.toLowerCase().includes('gratuit') || p === '') ? (p || 'Gratuit') : p + ' €';
           const popupContent = `
             <div style="min-width:180px">
               <h3 style="color:var(--rouge);margin:0 0 4px 0">${l.nom_lieu}</h3>
