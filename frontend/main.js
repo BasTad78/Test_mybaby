@@ -30,10 +30,23 @@ async function loadComponent(id, path) {
             const toggle = container.querySelector('#menuToggle');
             const nav = container.querySelector('#mainNav');
             if (toggle && nav) {
-                toggle.addEventListener('click', () => nav.classList.toggle('show'));
+                const toggleMenu = (e) => {
+                    e.stopPropagation();
+                    nav.classList.toggle('show');
+                };
+
+                toggle.addEventListener('click', toggleMenu);
+
                 // Close menu when a link is clicked
                 nav.querySelectorAll('.nav-btn').forEach(lnk => {
                     lnk.addEventListener('click', () => nav.classList.remove('show'));
+                });
+
+                // Close menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!nav.contains(e.target) && !toggle.contains(e.target)) {
+                        nav.classList.remove('show');
+                    }
                 });
             }
         }
