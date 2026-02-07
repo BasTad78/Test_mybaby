@@ -96,6 +96,10 @@ async function handleNavigation() {
 
         // Highlight active link
         updateActiveLinks(hash);
+
+        // Close mobile menu on navigation
+        const nav = document.getElementById('mainNav');
+        if (nav) nav.classList.remove('show');
     } catch (err) {
         app.innerHTML = `<div class="card" style="margin:20px; text-align:center">
             <h2>Oops!</h2>
