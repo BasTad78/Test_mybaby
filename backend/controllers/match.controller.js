@@ -66,7 +66,7 @@ const matchController = {
             console.error('Erreur validation match:', error);
             res.status(400).json({ message: error.message });
         }
-    }
+    },
     /**
      * Mettre à jour le statut d'un match (Accepté/Refusé/Annulé)
      */
