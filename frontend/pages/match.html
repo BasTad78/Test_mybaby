@@ -111,13 +111,24 @@
 </style>
 
 <script type="module">
-  import MatchChallengeService from './services/matchService.js?v=5';
+  import { api } from './services/api.js';
   import { userService } from './services/userService.js';
   import { babyfootService } from './services/babyfootService.js';
 
+  // Service de match défini directement ici pour éviter les problèmes de cache
+  const MatchChallengeService = {
+    getAllMatches: async () => await api.get('/matches'),
+    getMatchById: async (id) => await api.get(`/matches/${id}`),
+    createMatch: async (data) => await api.post('/matches', data),
+    validateMatch: async (id, data) => await api.put(`/matches/${id}/result`, data),
+    updateResult: async (id, result) => await api.put(`/matches/${id}/result`, result),
+    updateStatus: async (id, status) => await api.put(`/matches/${id}/status`, { status })
+  };
+
   (async function () {
     'use strict';
-    console.log("MatchChallengeService loaded:", MatchChallengeService);
+    console.log("MatchChallengeService défini directement:", MatchChallengeService);
+    console.log("updateStatus existe?", typeof MatchChallengeService.updateStatus);
 
     const panelTitle = document.getElementById('panel-title');
     const panelContent = document.getElementById('panel-content');
