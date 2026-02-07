@@ -10,18 +10,84 @@
 
   <!-- INSCRIPTION -->
   <form id="registerForm" class="form" style="display:none" autocomplete="on" novalidate>
-    <label for="regPseudo">Pseudo</label>
-    <input id="regPseudo" name="pseudo" type="text" autocomplete="username" placeholder="Ex : amina" required>
+    <div class="field-group">
+      <label for="regRole">Sélectionnez un profil utilisateur :</label>
+      <select id="regRole" name="role" required>
+        <option value="joueur">Joueur</option>
+        <option value="organisateur">Organisateur</option>
+      </select>
+    </div>
 
-    <label for="regEmail">Email (optionnel)</label>
-    <input id="regEmail" name="email" type="email" autocomplete="email" placeholder="email@exemple.com">
+    <!-- Fields for both, but names differ slightly in user request for Orga -->
+    <div id="commonFields">
+      <div id="joueurFields">
+        <label for="regPseudo">Pseudo (limite 50 caractères)</label>
+        <input id="regPseudo" name="pseudo" type="text" maxlength="50" placeholder="Ex : amina">
 
-    <label for="regPassword">Mot de passe</label>
-    <input id="regPassword" name="password" type="password" autocomplete="new-password" placeholder="••••••••" required>
+        <label for="regEmail">Email (limite 100 caractères)</label>
+        <input id="regEmail" name="email" type="email" maxlength="100" placeholder="email@exemple.com">
+
+        <label for="regPassword">Mot de passe (10 caractères)</label>
+        <input id="regPassword" name="password" type="password" maxlength="10" minlength="10" placeholder="••••••••••">
+
+        <label for="regPasswordConfirm">Confirmation de passe</label>
+        <input id="regPasswordConfirm" name="passwordConfirm" type="password" maxlength="10" placeholder="••••••••••">
+
+        <label for="regPhoto">Photo de profil</label>
+        <input id="regPhoto" name="photo_profil" type="file" accept="image/*">
+      </div>
+
+      <div id="orgaFields" style="display:none">
+        <p class="msg info">Bienvenue sur My_Baby nous vous souhaitons de belles gamelles</p>
+
+        <label for="regRespName">Nom du responsable de l’organisation (50 caractères)</label>
+        <input id="regRespName" name="nom_responsable" type="text" maxlength="50" placeholder="Jean Dupont">
+
+        <label for="regOrgaName">Nom de l’organisation (100 caractères)</label>
+        <input id="regOrgaName" name="nom_organisme" type="text" maxlength="100" placeholder="Mon Club">
+
+        <label for="regOrgaEmail">Email de l’organisation (100 caractères)</label>
+        <input id="regOrgaEmail" name="email_organisme" type="email" maxlength="100" placeholder="contact@club.com">
+
+        <label for="regOrgaPassword">Mot de passe (10 caractères)</label>
+        <input id="regOrgaPassword" name="password_orga" type="password" maxlength="10" minlength="10"
+          placeholder="••••••••••">
+
+        <label for="regOrgaPasswordConfirm">Confirmation de passe</label>
+        <input id="regOrgaPasswordConfirm" name="passwordConfirm_orga" type="password" maxlength="10"
+          placeholder="••••••••••">
+
+        <label for="regOrgaType">Quel type d’organisme êtes vous :</label>
+        <select id="regOrgaType" name="organisme">
+          <option value="association">Association</option>
+          <option value="club">Club</option>
+          <option value="entreprise">Entreprise</option>
+        </select>
+
+        <label for="regOrgaAddress">Adresse de l’organisme (sélectionnée sur une carte) :</label>
+        <div id="regOrgaMap" style="height:200px; margin-bottom:10px; border-radius:8px"></div>
+        <input type="hidden" id="regOrgaAddrVal" name="adresse_organisme">
+
+        <label for="regOrgaSiret">Numéro siret de l’organisme :</label>
+        <input id="regOrgaSiret" name="siret" type="text" placeholder="123 456 789 00012">
+
+        <label for="regOrgaLogo">Photo / logo organisme :</label>
+        <input id="regOrgaLogo" name="logo_organisme" type="file" accept="image/*">
+
+        <label for="regDocAttestation">Attestation de responsabilité :</label>
+        <input id="regDocAttestation" name="doc_attestation" type="file">
+
+        <label for="regDocPV">Procès verbal de l’organisme :</label>
+        <input id="regDocPV" name="doc_pv" type="file">
+
+        <p class="msg info">Formulaire à disposition : <a href="https://www.service-public.fr/simulateur/calcul/13971"
+            target="_blank">13971*01</a></p>
+      </div>
+    </div>
 
     <div class="actions">
       <button type="button" id="regCancel" class="btn ghost">Annuler</button>
-      <button type="submit" class="btn primary">S'inscrire et se connecter</button>
+      <button type="submit" class="btn primary">S'inscrire</button>
     </div>
     <div id="regErr" class="msg error" role="alert" aria-live="polite"></div>
   </form>
@@ -55,6 +121,25 @@
     const regCancel = document.getElementById('regCancel');
     const loginErr = document.getElementById('loginErr');
     const regErr = document.getElementById('regErr');
+    const regRole = document.getElementById('regRole');
+    const joueurFields = document.getElementById('joueurFields');
+    const orgaFields = document.getElementById('orgaFields');
+
+    let orgaMap = null;
+    let orgaMarker = null;
+
+    function initOrgaMap() {
+      if (orgaMap) return;
+      setTimeout(() => {
+        orgaMap = L.map('regOrgaMap').setView([48.8566, 2.3522], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(orgaMap);
+        orgaMap.on('click', (e) => {
+          if (orgaMarker) orgaMap.removeLayer(orgaMarker);
+          orgaMarker = L.marker(e.latlng).addTo(orgaMap);
+          document.getElementById('regOrgaAddrVal').value = `${e.latlng.lat},${e.latlng.lng}`;
+        });
+      }, 100);
+    }
 
     function toggle(mode) {
       if (mode === 'register') {
@@ -62,6 +147,7 @@
         loginForm.style.display = 'none';
         btnRegister.classList.add('active');
         btnLogin.classList.remove('active');
+        if (regRole.value === 'organisateur') initOrgaMap();
       } else {
         registerForm.style.display = 'none';
         loginForm.style.display = 'block';
@@ -71,6 +157,17 @@
       loginErr.textContent = '';
       regErr.textContent = '';
     }
+
+    regRole.onchange = (e) => {
+      if (e.target.value === 'organisateur') {
+        orgaFields.style.display = 'block';
+        joueurFields.style.display = 'none';
+        initOrgaMap();
+      } else {
+        orgaFields.style.display = 'none';
+        joueurFields.style.display = 'block';
+      }
+    };
 
     btnRegister.onclick = () => toggle('register');
     btnLogin.onclick = () => toggle('login');
@@ -101,14 +198,34 @@
     registerForm.onsubmit = async (e) => {
       e.preventDefault();
       regErr.textContent = '';
-      const payload = {
-        pseudo: e.target.pseudo.value,
-        email: e.target.email.value || null,
-        password: e.target.password.value,
-        role: 'joueur' // Par défaut
-      };
+
+      const role = regRole.value;
+      let payload = { role };
+
+      if (role === 'joueur') {
+        if (e.target.password.value !== e.target.passwordConfirm.value) {
+          regErr.textContent = "Les mots de passe ne correspondent pas.";
+          return;
+        }
+        payload.pseudo = e.target.pseudo.value;
+        payload.email = e.target.email.value;
+        payload.password = e.target.password.value;
+      } else {
+        if (e.target.password_orga.value !== e.target.passwordConfirm_orga.value) {
+          regErr.textContent = "Les mots de passe ne correspondent pas.";
+          return;
+        }
+        payload.pseudo = e.target.nom_responsable.value; // Map to pseudo/name
+        payload.email = e.target.email_organisme.value;
+        payload.password = e.target.password_orga.value;
+        payload.nom_organisme = e.target.nom_organisme.value;
+        payload.organisme = e.target.organisme.value;
+        payload.adresse_organisme = e.target.adresse_organisme.value;
+        payload.siret = e.target.siret.value;
+      }
 
       try {
+        // Handle file uploads (mocked here or handled via userService)
         const user = await userService.register(payload);
         localStorage.setItem('mybaby_user', JSON.stringify(user));
         window.location.hash = '#home';
