@@ -116,6 +116,44 @@ function updateActiveLinks(hash) {
     });
 }
 
+// Check for pending match challenges
+async function checkMatchNotifications() {
+    const rawUser = localStorage.getItem('mybaby_user');
+    if (!rawUser) return;
+
+    try {
+        const user = JSON.parse(rawUser);
+        const uid = user.id_utilisateur || user.id;
+
+        // Using fetch directly to avoid importing matchService in main.js (Circular dep risk or fetch complexity)
+        const res = await fetch('http://localhost:3000/api/matches');
+        const matches = await res.json();
+
+        const pending = matches.filter(m => m.id_joueur2 == uid && m.statut_validation === 'En attente');
+
+        const matchBtn = document.querySelector('.nav-btn[data-link="match"]');
+        if (matchBtn) {
+            let badge = matchBtn.querySelector('.notif-badge');
+            if (pending.length > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'notif-badge';
+                    matchBtn.appendChild(badge);
+                }
+                badge.textContent = pending.length;
+            } else if (badge) {
+                badge.remove();
+            }
+        }
+    } catch (e) {
+        console.warn('Notification check failed:', e);
+    }
+}
+
+// Global notification checker (every 30s)
+window.checkMatchNotifications = checkMatchNotifications;
+setInterval(checkMatchNotifications, 30000);
+
 // Global API Check
 async function checkBackend() {
     try {
@@ -135,4 +173,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadComponent('footer', 'components/Footer.html');
     handleNavigation();
     checkBackend();
+    setTimeout(checkMatchNotifications, 1000);
 });
