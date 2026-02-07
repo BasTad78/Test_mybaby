@@ -10,20 +10,18 @@
   box-sizing: border-box
 }
 
-html,
-body {
-  height: 100%;
-  margin: 0
-}
-
-body {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
-  background: var(--bg);
-  color: #222;
-  display: flex;
+/* Centering container for Auth Page */
+.auth-page {
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 40px 20px;
+  min-height: calc(100vh - 200px);
+}
+
+.auth-page .card {
+  max-width: var(--max-width);
+  margin: 0 auto;
 }
 
 /* Centering container */
