@@ -111,12 +111,13 @@
 </style>
 
 <script type="module">
-  import { matchService } from './services/matchService.js';
+  import { matchService } from './services/matchService.js?v=2';
   import { userService } from './services/userService.js';
   import { babyfootService } from './services/babyfootService.js';
 
   (async function () {
     'use strict';
+    console.log("MatchService loaded in match.html:", matchService);
 
     const panelTitle = document.getElementById('panel-title');
     const panelContent = document.getElementById('panel-content');
