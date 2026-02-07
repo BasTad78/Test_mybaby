@@ -68,6 +68,17 @@ class MatchService {
         // TODO: Mettre à jour les ELO des joueurs ici
         return rows[0];
     }
+
+    async updateStatus(id, status) {
+        const query = `
+            UPDATE Matchs 
+            SET statut_validation = $2
+            WHERE id_match = $1
+            RETURNING *
+        `;
+        const { rows } = await db.query(query, [id, status]);
+        return rows[0];
+    }
 }
 
 module.exports = new MatchService();
