@@ -167,8 +167,67 @@
                     `).join('');
           }
         } else {
-          panelTitle.textContent = "Mes Duels";
-          panelContent.innerHTML = '<div class="empty-msg">Vous n\'avez aucun défi en cours.</div>';
+          panelTitle.textContent = "Mes Duels & Défis";
+          const matches = await matchService.getAllMatches();
+          const myChallenges = matches.filter(m => (m.id_joueur1 == uid || m.id_joueur2 == uid) && m.statut_validation === 'En attente');
+
+          if (myChallenges.length === 0) {
+            panelContent.innerHTML = '<div class="empty-msg">Vous n\'avez aucun défi en attente.</div>';
+          } else {
+            panelContent.innerHTML = myChallenges.map(m => {
+              const isReceived = m.id_joueur2 == uid;
+              return `
+                <div class="match-card-sm" style="border-left: 4px solid ${isReceived ? 'var(--rouge)' : '#ccc'}">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <strong>${isReceived ? '📨 Reçu de ' + m.joueur1_nom : '🚀 Envoyé à ' + m.joueur2_nom}</strong>
+                        <span class="badge" style="background:#fff3cd; color:#856404; font-size:0.75rem">En attente</span>
+                    </div>
+                    <div style="margin-top:8px; font-size:0.85rem">
+                        📍 ${m.nom_lieu} (${m.ville})<br>
+                        📅 ${new Date(m.date_match).toLocaleDateString()} à ${m.heure_match}
+                    </div>
+                    ${isReceived ? `
+                    <div style="margin-top:12px; display:flex; gap:10px">
+                        <button class="btn primary btn-sm action-accept" data-id="${m.id_match}" style="padding:6px 12px; font-size:0.8rem">Accepter</button>
+                        <button class="btn secondary btn-sm action-refuse" data-id="${m.id_match}" style="padding:6px 12px; font-size:0.8rem">Refuser</button>
+                    </div>
+                    ` : `
+                    <div style="margin-top:12px">
+                        <button class="btn secondary btn-sm action-cancel" data-id="${m.id_match}" style="padding:6px 12px; font-size:0.8rem">Annuler</button>
+                    </div>
+                    `}
+                </div>`;
+            }).join('');
+
+            // Bind actions
+            panelContent.querySelectorAll('.action-accept').forEach(btn => {
+              btn.onclick = async () => {
+                if (confirm("Accepter ce défi ?")) {
+                  await matchService.updateStatus(btn.dataset.id, 'Accepté');
+                  alert("Défi accepté ! Préparez-vous au match 🎯");
+                  switchTab('duel');
+                  if (window.checkMatchNotifications) window.checkMatchNotifications();
+                }
+              };
+            });
+            panelContent.querySelectorAll('.action-refuse').forEach(btn => {
+              btn.onclick = async () => {
+                if (confirm("Refuser ce défi ?")) {
+                  await matchService.updateStatus(btn.dataset.id, 'Refusé');
+                  switchTab('duel');
+                  if (window.checkMatchNotifications) window.checkMatchNotifications();
+                }
+              };
+            });
+            panelContent.querySelectorAll('.action-cancel').forEach(btn => {
+              btn.onclick = async () => {
+                if (confirm("Annuler votre défi ?")) {
+                  await matchService.updateStatus(btn.dataset.id, 'Annulé');
+                  switchTab('duel');
+                }
+              };
+            });
+          }
         }
       } catch (err) {
         console.error("Tab load error:", err);
