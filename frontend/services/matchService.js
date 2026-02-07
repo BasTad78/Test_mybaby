@@ -1,6 +1,6 @@
 import { api } from './api.js';
 
-export const matchService = {
+const matchService = {
     getAllMatches: async () => {
         return await api.get('/matches');
     },
@@ -20,3 +20,5 @@ export const matchService = {
         return await api.put(`/matches/${id}/status`, { status });
     }
 };
+
+export default matchService;
