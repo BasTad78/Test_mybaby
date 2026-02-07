@@ -1,6 +1,6 @@
 import { api } from './api.js';
 
-const matchService = {
+const MatchChallengeService = {
     getAllMatches: async () => {
         return await api.get('/matches');
     },
@@ -21,4 +21,4 @@ const matchService = {
     }
 };
 
-export default matchService;
+export default MatchChallengeService;
