@@ -4,11 +4,13 @@
 
 const routes = {
     '#home': 'pages/Accueil.html',
+    '#login': 'pages/connexion.html',
+    '#register': 'pages/inscription.html',
     '#map': 'pages/carte.html',
-    '#match': 'pages/match.html',
-    '#ranking': 'pages/classement.html',
     '#profile': 'pages/profil.html',
-    '#login': 'pages/inscription.html'
+    '#ranking': 'pages/classement.html',
+    '#match': 'pages/match_v2.html',  // Version 2 pour bypasser le cache
+    '#events': 'pages/evenement.html'
 };
 
 const app = document.getElementById('app');
