@@ -110,3 +110,79 @@ select.ctrl-btn {
   background-repeat: no-repeat;
   background-position: calc(100% - 15px) center;
 }
+
+/* Drawer Handle (Hidden on Desktop) */
+.drawer-handle {
+  display: none;
+  width: 100%;
+  height: 40px;
+  background: #fff;
+  border: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.drawer-handle span {
+  width: 40px;
+  height: 4px;
+  background: #ccc;
+  border-radius: 2px;
+}
+
+@media (max-width: 768px) {
+  .map-container {
+    flex-direction: column-reverse;
+  }
+
+  .side-panel {
+    width: 100%;
+    height: 60px;
+    /* Collapsed height */
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-right: none;
+    border-top: 1px solid #ddd;
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #fff;
+    z-index: 1001;
+    /* Above map controls */
+  }
+
+  .side-panel.expanded {
+    height: 70vh;
+  }
+
+  .drawer-handle {
+    display: flex;
+  }
+
+  .side-header {
+    padding: 15px 20px;
+  }
+
+  .lieux-list {
+    padding-bottom: 20px;
+  }
+
+  .controls {
+    top: 15px !important;
+    left: 15px !important;
+    gap: 8px;
+  }
+
+  .ctrl-btn {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+  }
+
+  .legend {
+    bottom: 80px !important;
+    /* Above the collapsed drawer */
+    right: 15px !important;
+    padding: 12px;
+  }
+}
