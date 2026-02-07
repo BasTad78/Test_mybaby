@@ -19,10 +19,24 @@ async function loadComponent(id, path) {
     try {
         const response = await fetch(path);
         const html = await response.text();
-        document.getElementById(id).innerHTML = html;
+        const container = document.getElementById(id);
+        container.innerHTML = html;
 
         // Execute scripts for components (like navigation logic)
-        executeScripts(document.getElementById(id));
+        executeScripts(container);
+
+        // Header specific logic: burger menu toggle
+        if (id === 'header') {
+            const toggle = container.querySelector('#menuToggle');
+            const nav = container.querySelector('#mainNav');
+            if (toggle && nav) {
+                toggle.addEventListener('click', () => nav.classList.toggle('show'));
+                // Close menu when a link is clicked
+                nav.querySelectorAll('.nav-btn').forEach(lnk => {
+                    lnk.addEventListener('click', () => nav.classList.remove('show'));
+                });
+            }
+        }
     } catch (err) {
         console.error(`Failed to load component ${id}:`, err);
     }
@@ -46,7 +60,7 @@ function executeScripts(container) {
 }
 
 async function handleNavigation() {
-    const hash = window.location.hash || '#home';
+    const hash = window.location.hash || '#login';
     const path = routes[hash] || routes['#home'];
 
     // UI Feedback: Loading
