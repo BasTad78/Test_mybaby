@@ -193,6 +193,8 @@
       loadLieux();
     }
 
+    let allModels = [];
+
     async function loadLieux() {
       const listEl = document.getElementById('lieuxList');
       const labelEl = document.getElementById('activeFilter');
@@ -200,9 +202,19 @@
       const filterPrice = document.getElementById('filterPrice')?.value;
 
       try {
+        if (allModels.length === 0) allModels = await babyfootService.getModels();
         if (allLieux.length === 0) allLieux = await babyfootService.getAllLieux();
+
         markerGroup.clearLayers();
         let filtered = allLieux;
+
+        // Map model names if missing
+        filtered.forEach(l => {
+          if (!l.nom_modele && l.id_modele) {
+            const m = allModels.find(mod => mod.id_modele == l.id_modele);
+            if (m) l.nom_modele = m.nom_modele;
+          }
+        });
 
         // Apply Ardt Filter
         if (filterArdt && arrondissementsGeoJSON) {
@@ -282,7 +294,8 @@
           m.bindPopup(popupContent);
 
           // Auto-zoom on marker click
-          m.on('click', () => {
+          m.on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
             map.setView([lat, lng], 18);
           });
         });
