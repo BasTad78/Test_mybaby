@@ -1,112 +1,115 @@
 <link rel="stylesheet" href="pages/inscription.css">
 
-<section class="card" aria-labelledby="page-title">
-  <h1 id="page-title" class="brand">MyBaby</h1>
+<div class="auth-page">
+  <section class="card" aria-labelledby="page-title">
+    <h1 id="page-title" class="brand">MyBaby</h1>
 
-  <div class="switch" role="tablist" aria-label="Inscription ou connexion">
-    <button id="btnRegister" class="switch-btn" role="tab" aria-selected="false">Inscription</button>
-    <button id="btnLogin" class="switch-btn active" role="tab" aria-selected="true">Connexion</button>
-  </div>
-
-  <!-- INSCRIPTION -->
-  <form id="registerForm" class="form" style="display:none" autocomplete="on" novalidate>
-    <div class="field-group">
-      <label for="regRole">Sélectionnez un profil utilisateur :</label>
-      <select id="regRole" name="role" required>
-        <option value="joueur">Joueur</option>
-        <option value="organisateur">Organisateur</option>
-      </select>
+    <div class="switch" role="tablist" aria-label="Inscription ou connexion">
+      <button id="btnRegister" class="switch-btn" role="tab" aria-selected="false">Inscription</button>
+      <button id="btnLogin" class="switch-btn active" role="tab" aria-selected="true">Connexion</button>
     </div>
 
-    <!-- Fields for both, but names differ slightly in user request for Orga -->
-    <div id="commonFields">
-      <div id="joueurFields">
-        <label for="regPseudo">Pseudo (limite 50 caractères)</label>
-        <input id="regPseudo" name="pseudo" type="text" maxlength="50" placeholder="Ex : amina">
-
-        <label for="regEmail">Email (limite 100 caractères)</label>
-        <input id="regEmail" name="email" type="email" maxlength="100" placeholder="email@exemple.com">
-
-        <label for="regPassword">Mot de passe (10 caractères)</label>
-        <input id="regPassword" name="password" type="password" maxlength="10" minlength="10" placeholder="••••••••••">
-
-        <label for="regPasswordConfirm">Confirmation de passe</label>
-        <input id="regPasswordConfirm" name="passwordConfirm" type="password" maxlength="10" placeholder="••••••••••">
-
-        <label for="regPhoto">Photo de profil</label>
-        <input id="regPhoto" name="photo_profil" type="file" accept="image/*">
-      </div>
-
-      <div id="orgaFields" style="display:none">
-        <p class="msg info">Bienvenue sur My_Baby nous vous souhaitons de belles gamelles</p>
-
-        <label for="regRespName">Nom du responsable de l’organisation (50 caractères)</label>
-        <input id="regRespName" name="nom_responsable" type="text" maxlength="50" placeholder="Jean Dupont">
-
-        <label for="regOrgaName">Nom de l’organisation (100 caractères)</label>
-        <input id="regOrgaName" name="nom_organisme" type="text" maxlength="100" placeholder="Mon Club">
-
-        <label for="regOrgaEmail">Email de l’organisation (100 caractères)</label>
-        <input id="regOrgaEmail" name="email_organisme" type="email" maxlength="100" placeholder="contact@club.com">
-
-        <label for="regOrgaPassword">Mot de passe (10 caractères)</label>
-        <input id="regOrgaPassword" name="password_orga" type="password" maxlength="10" minlength="10"
-          placeholder="••••••••••">
-
-        <label for="regOrgaPasswordConfirm">Confirmation de passe</label>
-        <input id="regOrgaPasswordConfirm" name="passwordConfirm_orga" type="password" maxlength="10"
-          placeholder="••••••••••">
-
-        <label for="regOrgaType">Quel type d’organisme êtes vous :</label>
-        <select id="regOrgaType" name="organisme">
-          <option value="association">Association</option>
-          <option value="club">Club</option>
-          <option value="entreprise">Entreprise</option>
+    <!-- INSCRIPTION -->
+    <form id="registerForm" class="form" style="display:none" autocomplete="on" novalidate>
+      <div class="field-group">
+        <label for="regRole">Sélectionnez un profil utilisateur :</label>
+        <select id="regRole" name="role" required>
+          <option value="joueur">Joueur</option>
+          <option value="organisateur">Organisateur</option>
         </select>
-
-        <label for="regOrgaAddress">Adresse de l’organisme (sélectionnée sur une carte) :</label>
-        <div id="regOrgaMap" style="height:200px; margin-bottom:10px; border-radius:8px"></div>
-        <input type="hidden" id="regOrgaAddrVal" name="adresse_organisme">
-
-        <label for="regOrgaSiret">Numéro siret de l’organisme :</label>
-        <input id="regOrgaSiret" name="siret" type="text" placeholder="123 456 789 00012">
-
-        <label for="regOrgaLogo">Photo / logo organisme :</label>
-        <input id="regOrgaLogo" name="logo_organisme" type="file" accept="image/*">
-
-        <label for="regDocAttestation">Attestation de responsabilité :</label>
-        <input id="regDocAttestation" name="doc_attestation" type="file">
-
-        <label for="regDocPV">Procès verbal de l’organisme :</label>
-        <input id="regDocPV" name="doc_pv" type="file">
-
-        <p class="msg info">Formulaire à disposition : <a href="https://www.service-public.fr/simulateur/calcul/13971"
-            target="_blank">13971*01</a></p>
       </div>
-    </div>
 
-    <div class="actions">
-      <button type="button" id="regCancel" class="btn ghost">Annuler</button>
-      <button type="submit" class="btn primary">S'inscrire</button>
-    </div>
-    <div id="regErr" class="msg error" role="alert" aria-live="polite"></div>
-  </form>
+      <!-- Fields for both, but names differ slightly in user request for Orga -->
+      <div id="commonFields">
+        <div id="joueurFields">
+          <label for="regPseudo">Pseudo (limite 50 caractères)</label>
+          <input id="regPseudo" name="pseudo" type="text" maxlength="50" placeholder="Ex : amina">
 
-  <!-- CONNEXION -->
-  <form id="loginForm" class="form" autocomplete="on" novalidate>
-    <label for="logUser">Pseudo ou email</label>
-    <input id="logUser" name="user" type="text" autocomplete="username" placeholder="Ex : amina" required>
+          <label for="regEmail">Email (limite 100 caractères)</label>
+          <input id="regEmail" name="email" type="email" maxlength="100" placeholder="email@exemple.com">
 
-    <label for="logPassword">Mot de passe</label>
-    <input id="logPassword" name="password" type="password" autocomplete="current-password" placeholder="••••••••"
-      required>
+          <label for="regPassword">Mot de passe (10 caractères)</label>
+          <input id="regPassword" name="password" type="password" maxlength="10" minlength="10"
+            placeholder="••••••••••">
 
-    <div class="actions">
-      <button type="submit" class="btn primary">Se connecter</button>
-    </div>
-    <div id="loginErr" class="msg error" role="alert" aria-live="polite"></div>
-  </form>
-</section>
+          <label for="regPasswordConfirm">Confirmation de passe</label>
+          <input id="regPasswordConfirm" name="passwordConfirm" type="password" maxlength="10" placeholder="••••••••••">
+
+          <label for="regPhoto">Photo de profil</label>
+          <input id="regPhoto" name="photo_profil" type="file" accept="image/*">
+        </div>
+
+        <div id="orgaFields" style="display:none">
+          <p class="msg info">Bienvenue sur My_Baby nous vous souhaitons de belles gamelles</p>
+
+          <label for="regRespName">Nom du responsable de l’organisation (50 caractères)</label>
+          <input id="regRespName" name="nom_responsable" type="text" maxlength="50" placeholder="Jean Dupont">
+
+          <label for="regOrgaName">Nom de l’organisation (100 caractères)</label>
+          <input id="regOrgaName" name="nom_organisme" type="text" maxlength="100" placeholder="Mon Club">
+
+          <label for="regOrgaEmail">Email de l’organisation (100 caractères)</label>
+          <input id="regOrgaEmail" name="email_organisme" type="email" maxlength="100" placeholder="contact@club.com">
+
+          <label for="regOrgaPassword">Mot de passe (10 caractères)</label>
+          <input id="regOrgaPassword" name="password_orga" type="password" maxlength="10" minlength="10"
+            placeholder="••••••••••">
+
+          <label for="regOrgaPasswordConfirm">Confirmation de passe</label>
+          <input id="regOrgaPasswordConfirm" name="passwordConfirm_orga" type="password" maxlength="10"
+            placeholder="••••••••••">
+
+          <label for="regOrgaType">Quel type d’organisme êtes vous :</label>
+          <select id="regOrgaType" name="organisme">
+            <option value="association">Association</option>
+            <option value="club">Club</option>
+            <option value="entreprise">Entreprise</option>
+          </select>
+
+          <label for="regOrgaAddress">Adresse de l’organisme (sélectionnée sur une carte) :</label>
+          <div id="regOrgaMap" style="height:200px; margin-bottom:10px; border-radius:8px"></div>
+          <input type="hidden" id="regOrgaAddrVal" name="adresse_organisme">
+
+          <label for="regOrgaSiret">Numéro siret de l’organisme :</label>
+          <input id="regOrgaSiret" name="siret" type="text" placeholder="123 456 789 00012">
+
+          <label for="regOrgaLogo">Photo / logo organisme :</label>
+          <input id="regOrgaLogo" name="logo_organisme" type="file" accept="image/*">
+
+          <label for="regDocAttestation">Attestation de responsabilité :</label>
+          <input id="regDocAttestation" name="doc_attestation" type="file">
+
+          <label for="regDocPV">Procès verbal de l’organisme :</label>
+          <input id="regDocPV" name="doc_pv" type="file">
+
+          <p class="msg info">Formulaire à disposition : <a href="https://www.service-public.fr/simulateur/calcul/13971"
+              target="_blank">13971*01</a></p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="regCancel" class="btn ghost">Annuler</button>
+        <button type="submit" class="btn primary">S'inscrire</button>
+      </div>
+      <div id="regErr" class="msg error" role="alert" aria-live="polite"></div>
+    </form>
+
+    <!-- CONNEXION -->
+    <form id="loginForm" class="form" autocomplete="on" novalidate>
+      <label for="logUser">Pseudo ou email</label>
+      <input id="logUser" name="user" type="text" autocomplete="username" placeholder="Ex : amina" required>
+
+      <label for="logPassword">Mot de passe</label>
+      <input id="logPassword" name="password" type="password" autocomplete="current-password" placeholder="••••••••"
+        required>
+
+      <div class="actions">
+        <button type="submit" class="btn primary">Se connecter</button>
+      </div>
+      <div id="loginErr" class="msg error" role="alert" aria-live="polite"></div>
+    </form>
+  </section>
+</div>
 
 <script type="module">
   import { userService } from './services/userService.js';
