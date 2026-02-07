@@ -11,8 +11,7 @@ exports.getAllUsers = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
     try {
-        const user = await userService.getUserById(req.params.id);
-        if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+        const user = await userService.getProfile(req.params.id);
         res.json(user);
     } catch (error) {
         res.status(500).json({ error: error.message });

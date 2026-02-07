@@ -88,8 +88,8 @@ class MatchService {
 
         // Récupérer les infos du match et des joueurs
         const match = await this.getMatchById(id);
-        const player1 = await userService.getUserById(match.id_joueur1);
-        const player2 = await userService.getUserById(match.id_joueur2);
+        const player1 = await userService.getProfile(match.id_joueur1);
+        const player2 = await userService.getProfile(match.id_joueur2);
 
         // Calculer les nouveaux scores ELO
         const { player1NewElo, player2NewElo } = this.calculateEloChange(
