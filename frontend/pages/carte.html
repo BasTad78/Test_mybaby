@@ -237,15 +237,23 @@
         // Apply Price Filter
         if (filterPrice) {
           const maxP = parseFloat(filterPrice);
-          filtered = filtered.filter(l => parseFloat(l.prix || 0) <= maxP);
+          filtered = filtered.filter(l => {
+            if (!l.prix || l.prix.toLowerCase().includes('gratuit')) return 0 <= maxP;
+            // Extract number from string (e.g. "0.50 €" -> 0.50)
+            const pVal = parseFloat(l.prix.replace(/[^\d.]/g, ''));
+            return !isNaN(pVal) && pVal <= maxP;
+          });
         }
 
-        listEl.innerHTML = filtered.length ? filtered.map(l => `
+        listEl.innerHTML = filtered.length ? filtered.map(l => {
+          const displayPrice = l.prix ? (l.prix.includes('€') ? l.prix : l.prix + ' €') : 'Gratuit';
+          return `
           <div class="lieu-card" onclick="window.markers['${l.id_lieu}'].openPopup(); map.setView(window.markers['${l.id_lieu}'].getLatLng(), 18)">
             <div style="font-weight:800; color:var(--rouge)">${l.nom_lieu}</div>
             <div style="font-size:0.8rem; color:#666">${l.adresse || ''}</div>
-            <div style="font-size:0.75rem; font-weight:700; margin-top:4px">${l.prix ? l.prix + ' €' : 'Gratuit'} • ${l.nom_modele || 'Modèle inconnu'}</div>
-          </div>`).join('') : '<div class="empty-msg">Aucun lieu trouvé.</div>';
+            <div style="font-size:0.75rem; font-weight:700; margin-top:4px">${displayPrice} • ${l.nom_modele || 'Modèle inconnu'}</div>
+          </div>`;
+        }).join('') : '<div class="empty-msg">Aucun lieu trouvé.</div>';
 
         window.markers = {};
         filtered.forEach(l => {
@@ -279,12 +287,13 @@
           const m = L.marker([lat, lng], { icon: babyfootIcon }).addTo(markerGroup);
           window.markers[l.id_lieu] = m;
 
+          const displayPrice = l.prix ? (l.prix.includes('€') ? l.prix : l.prix + ' €') : 'Gratuit';
           const popupContent = `
             <div style="min-width:180px">
               <h3 style="color:var(--rouge);margin:0 0 4px 0">${l.nom_lieu}</h3>
               <p style="font-size:0.85rem;margin:0;color:#555">${l.adresse || ''}</p>
               <div style="margin-top:8px; display:flex; gap:8px; font-size:0.8rem">
-                <span style="background:var(--rouge); color:#fff; padding:2px 6px; border-radius:4px; font-weight:700">${l.prix ? l.prix + ' €' : 'Gratuit'}</span>
+                <span style="background:var(--rouge); color:#fff; padding:2px 6px; border-radius:4px; font-weight:700">${displayPrice}</span>
                 <span style="background:#eee; padding:2px 6px; border-radius:4px">${l.nom_modele || 'Modèle classique'}</span>
               </div>
               ${sInfo}
