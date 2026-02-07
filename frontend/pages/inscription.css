@@ -10,6 +10,11 @@
   box-sizing: border-box
 }
 
+/* Force block layout on body to avoid side-by-side header/footer breakage */
+body {
+  display: block !important;
+}
+
 /* Centering container for Auth Page */
 .auth-page {
   display: flex !important;
