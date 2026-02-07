@@ -1,6 +1,10 @@
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000/api'
-    : 'https://testmybaby-production.up.railway.app/api'; // Remplacer par l'URL de production
+// Utiliser toujours Railway (même en local)
+const API_URL = 'https://testmybaby-production.up.railway.app/api';
+
+// Si vous voulez tester avec le backend local, décommentez les lignes ci-dessous :
+// const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+//     ? 'http://localhost:3000/api'
+//     : 'https://testmybaby-production.up.railway.app/api';
 
 class Api {
     async get(endpoint) {
