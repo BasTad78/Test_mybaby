@@ -43,6 +43,50 @@
   </svg>
 </div>
 
+<!-- Modal Ajout Babyfoot -->
+<div id="modalAdd" class="modal">
+  <div class="modal-content">
+    <h2 style="color:var(--rouge); margin-top:0">Ajouter un Babyfoot</h2>
+    <form id="formAddBaby" class="form">
+      <label for="fNomLieu">Nom du lieu (50 car.)</label>
+      <input id="fNomLieu" name="nom_lieu" type="text" maxlength="50" required>
+
+      <label for="fAdresse">Localisation (sélectionnée sur la carte)</label>
+      <input id="fAdresse" name="adresse" type="text" readonly required placeholder="Cliquez sur la carte">
+      <input type="hidden" id="fLat" name="ycoord">
+      <input type="hidden" id="fLng" name="xcoord">
+
+      <label for="fModel">Modèle du baby foot</label>
+      <select id="fModel" name="id_modele" required></select>
+
+      <label for="fMarque">Marque du baby foot</label>
+      <input id="fMarque" name="marque" type="text" maxlength="50" required>
+
+      <div style="display:flex; gap:10px">
+        <div style="flex:1">
+          <label>Longueur (cm)</label>
+          <input id="fLong" type="number" step="0.1" required>
+        </div>
+        <div style="flex:1">
+          <label>Largeur (cm)</label>
+          <input id="fLarg" type="number" step="0.1" required>
+        </div>
+      </div>
+
+      <label for="fMatiere">Matière du baby foot</label>
+      <input id="fMatiere" name="matiere" type="text" maxlength="50">
+
+      <label for="fCouleur">Couleur du baby foot</label>
+      <input id="fCouleur" name="couleur" type="text" maxlength="50">
+
+      <div class="actions" style="margin-top:20px">
+        <button type="button" id="btnCancelAdd" class="btn secondary">Annuler</button>
+        <button type="submit" class="btn primary">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script type="module">
   import { babyfootService } from './services/babyfootService.js';
 
@@ -197,6 +241,30 @@
       } catch (e) { console.error(e); }
     }
 
+    const modalAdd = document.getElementById('modalAdd');
+    const formAdd = document.getElementById('formAddBaby');
+    const btnCancelAdd = document.getElementById('btnCancelAdd');
+    const selectModel = document.getElementById('fModel');
+
+    async function initAddForm() {
+      try {
+        const models = await babyfootService.getModels();
+        selectModel.innerHTML = models.map(m => `<option value="${m.id_modele}" data-marque="${m.marque || ''}" data-matiere="${m.matière || ''}" data-couleur="${m.couleur || ''}" data-taille="${m.taille || ''}">${m.nom_modele}</option>`).join('');
+
+        selectModel.onchange = () => {
+          const opt = selectModel.selectedOptions[0];
+          document.getElementById('fMarque').value = opt.dataset.marque;
+          document.getElementById('fMatiere').value = opt.dataset.matiere;
+          document.getElementById('fCouleur').value = opt.dataset.couleur;
+          const [l, w] = (opt.dataset.taille || "0/0").split('/');
+          document.getElementById('fLong').value = l || "";
+          document.getElementById('fLarg').value = w || "";
+        };
+        // Trigger once
+        if (selectModel.onchange) selectModel.onchange();
+      } catch (e) { console.error("Error loading models:", e); }
+    }
+
     document.getElementById('btnAdd').onclick = async () => {
       const user = JSON.parse(localStorage.getItem('mybaby_user') || '{}');
       if (!user.id_utilisateur && !user.id) {
@@ -205,54 +273,55 @@
         return;
       }
 
+      await initAddForm();
       alert("Cliquez sur l'emplacement précis du babyfoot sur la carte...");
+
       map.once('click', async e => {
         const { lat, lng } = e.latlng;
+        document.getElementById('fLat').value = lat;
+        document.getElementById('fLng').value = lng;
 
-        // Tentative de reverse geocoding inverse pour aider l'utilisateur
-        let autoAddr = "";
         try {
           const revRes = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${lng}&lat=${lat}`);
           const revData = await revRes.json();
           if (revData.features && revData.features.length > 0) {
-            autoAddr = revData.features[0].properties.label;
+            document.getElementById('fAdresse').value = revData.features[0].properties.label;
           }
         } catch (err) { }
 
-        const nom = prompt("Nom du lieu (ex: Bar du Commerce) :");
-        if (!nom) return;
-
-        const adresse = prompt("Adresse précise :", autoAddr);
-        if (!adresse) return;
-
-        try {
-          const models = await babyfootService.getModels();
-          if (!models.length) throw new Error("Impossible de charger les modèles");
-
-          const modelMsg = models.map((m, i) => `${i + 1}. ${m.marque} ${m.nom_modele}`).join('\n');
-          const choice = prompt(`Choisissez un modèle (numéro) :\n${modelMsg}`, "1");
-          const selectedModel = models[parseInt(choice) - 1] || models[0];
-
-          const payload = {
-            nom_lieu: nom,
-            adresse: adresse,
-            ville: "Paris", // Par défaut pour ce projet
-            id_modele: selectedModel.id_modele,
-            id_utilisateur: user.id_utilisateur || user.id,
-            xcoord: lng,
-            ycoord: lat
-          };
-
-          await babyfootService.createBabyfoot(payload);
-          alert("Lieu ajouté avec succès !");
-
-          // Rechargement immédiat
-          allLieux = [];
-          loadLieux();
-        } catch (err) {
-          alert("Erreur lors de l'ajout : " + err.message);
-        }
+        modalAdd.classList.add('show');
       });
+    };
+
+    btnCancelAdd.onclick = () => modalAdd.classList.remove('show');
+
+    formAdd.onsubmit = async (e) => {
+      e.preventDefault();
+      const user = JSON.parse(localStorage.getItem('mybaby_user') || '{}');
+
+      try {
+        const payload = {
+          nom_lieu: formAdd.nom_lieu.value,
+          adresse: formAdd.adresse.value,
+          ville: "Paris",
+          id_modele: formAdd.id_modele.value,
+          id_utilisateur: user.id_utilisateur || user.id,
+          xcoord: parseFloat(formAdd.xcoord.value),
+          ycoord: parseFloat(formAdd.ycoord.value),
+          taille: `${formAdd.fLong.value}/${formAdd.fLarg.value}`,
+          marque: formAdd.marque.value,
+          matiere: formAdd.matiere.value,
+          couleur: formAdd.couleur.value
+        };
+
+        await babyfootService.createBabyfoot(payload);
+        alert("Lieu ajouté avec succès !");
+        modalAdd.classList.remove('show');
+        allLieux = [];
+        loadLieux();
+      } catch (err) {
+        alert("Erreur lors de l'ajout : " + err.message);
+      }
     };
 
     initLayers();
