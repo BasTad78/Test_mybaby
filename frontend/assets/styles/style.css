@@ -113,9 +113,9 @@ body.fullscreen-page main#app {
   flex-direction: column;
 }
 
-body.fullscreen-page #footer {
+/* body.fullscreen-page #footer {
   display: none !important;
-}
+} */
 
 /* Common Components */
 .card {
