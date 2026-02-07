@@ -80,7 +80,7 @@ async function handleNavigation() {
     app.innerHTML = '<div style="display:flex; justify-content:center; padding:50px"><div class="loader">Chargement...</div></div>';
 
     try {
-        const response = await fetch(path);
+        const response = await fetch(`${path}?t=${Date.now()}`);
         if (!response.ok) throw new Error('Page non trouvée');
         const html = await response.text();
 
@@ -126,7 +126,7 @@ async function checkMatchNotifications() {
         const uid = user.id_utilisateur || user.id;
 
         // Using fetch directly to avoid importing matchService in main.js (Circular dep risk or fetch complexity)
-        const res = await fetch('http://localhost:3000/api/matches');
+        const res = await fetch('https://testmybaby-production.up.railway.app/api/matches');
         const matches = await res.json();
 
         const pending = matches.filter(m => m.id_joueur2 == uid && m.statut_validation === 'En attente');
