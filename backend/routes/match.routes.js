@@ -7,5 +7,6 @@ router.post("/", matchController.createMatch);
 router.get("/", matchController.getAllMatchs);
 router.get("/:id", matchController.getMatchById);
 router.put("/:id/result", matchController.validateMatch);
+router.put("/:id/status", matchController.updateStatus);
 
 module.exports = router;
