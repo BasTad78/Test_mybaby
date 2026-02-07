@@ -67,6 +67,20 @@ const matchController = {
             res.status(400).json({ message: error.message });
         }
     }
+    /**
+     * Mettre à jour le statut d'un match (Accepté/Refusé/Annulé)
+     */
+    updateStatus: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+            const result = await matchService.updateStatus(id, status);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Erreur mise à jour statut match:', error);
+            res.status(400).json({ message: error.message });
+        }
+    }
 };
 
 module.exports = matchController;
