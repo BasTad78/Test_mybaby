@@ -186,7 +186,7 @@ body.fullscreen-page #footer {
   }
 
   nav {
-    display: none;
+    display: none !important;
     position: absolute;
     top: 100%;
     left: 0;
@@ -196,11 +196,11 @@ body.fullscreen-page #footer {
     padding: 16px;
     gap: 8px;
     border-bottom: 2px solid var(--bordeaux);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
   nav.show {
-    display: flex;
+    display: flex !important;
   }
 
   .nav-btn {
