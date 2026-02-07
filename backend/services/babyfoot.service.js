@@ -95,7 +95,7 @@ const babyfootService = {
                 b.prix, 
                 b.nombre,
                 m.id_modele, m.nom_modele, m.marque, m.taille, m.matière, m.couleur,
-                l.id_lieu, l.nom_lieu, l.adresse, l.ville, l.code_postal, l.xcoord, l.ycoord
+                l.id_lieu, l.nom_lieu, l.adresse, l.ville, l.code_postal, l.xcoord, l.ycoord, l.id_utilisateur
             FROM Babyfoots b
             JOIN Modeles m ON b.id_modele = m.id_modele
             JOIN Lieux l ON b.id_lieu = l.id_lieu
