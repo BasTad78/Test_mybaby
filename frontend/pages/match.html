@@ -111,13 +111,13 @@
 </style>
 
 <script type="module">
-  import MatchService from './services/matchService.js?v=3';
+  import MatchChallengeService from './services/matchService.js?v=5';
   import { userService } from './services/userService.js';
   import { babyfootService } from './services/babyfootService.js';
 
   (async function () {
     'use strict';
-    console.log("MatchService (v3) loaded:", MatchService);
+    console.log("MatchChallengeService loaded:", MatchChallengeService);
 
     const panelTitle = document.getElementById('panel-title');
     const panelContent = document.getElementById('panel-content');
@@ -153,7 +153,7 @@
           }
         } else if (target === 'stats') {
           panelTitle.textContent = "Derniers Matchs";
-          const matches = await MatchService.getAllMatches();
+          const matches = await MatchChallengeService.getAllMatches();
           if (matches.length === 0) {
             panelContent.innerHTML = '<div class="empty-msg">Aucun match enregistré récemment.</div>';
           } else {
@@ -169,7 +169,7 @@
           }
         } else {
           panelTitle.textContent = "Mes Duels & Défis";
-          const matches = await MatchService.getAllMatches();
+          const matches = await MatchChallengeService.getAllMatches();
           const myChallenges = matches.filter(m => (m.id_joueur1 == uid || m.id_joueur2 == uid) && m.statut_validation === 'En attente');
 
           if (myChallenges.length === 0) {
@@ -208,7 +208,7 @@
                 console.log("Accepting match:", mid);
                 if (confirm("Accepter ce défi ?")) {
                   try {
-                    await MatchService.updateStatus(mid, 'Accepté');
+                    await MatchChallengeService.updateStatus(mid, 'Accepté');
                     alert("🎯 Défi accepté ! Préparez-vous au match");
                     await switchTab('duel');
                     if (window.checkMatchNotifications) window.checkMatchNotifications();
@@ -227,7 +227,7 @@
                 console.log("Refusing match:", mid);
                 if (confirm("Refuser ce défi ?")) {
                   try {
-                    await MatchService.updateStatus(mid, 'Refusé');
+                    await MatchChallengeService.updateStatus(mid, 'Refusé');
                     await switchTab('duel');
                     if (window.checkMatchNotifications) window.checkMatchNotifications();
                   } catch (err) {
@@ -245,7 +245,7 @@
                 console.log("Cancelling match:", mid);
                 if (confirm("Annuler votre défi ?")) {
                   try {
-                    await MatchService.updateStatus(mid, 'Annulé');
+                    await MatchChallengeService.updateStatus(mid, 'Annulé');
                     await switchTab('duel');
                   } catch (err) {
                     console.error("Cancel error:", err);
@@ -323,7 +323,7 @@
       };
 
       try {
-        const result = await MatchService.createMatch(payload);
+        const result = await MatchChallengeService.createMatch(payload);
         console.log("Match successfully created:", result);
         alert("🎯 Défi lancé avec succès !");
         matchModal.classList.remove('show');
